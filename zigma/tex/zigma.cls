@@ -87,16 +87,16 @@
 \tl_if_empty:NF \zigma@template
   {
     % Load template file
-    \file_if_exist:nTF {zigma-class/templates/zigma-template-\zigma@template.code.tex}
+    \file_if_exist:nTF {templates/zigma-template-\zigma@template.code.tex}
       {
-        \file_input:n {zigma-class/templates/zigma-template-\zigma@template.code.tex}
+        \file_input:n {templates/zigma-template-\zigma@template.code.tex}
         \zigma_log:x { [ZIGMA]~Template~loaded:~\zigma@template }
       }
       {
         \msg_error:nnxxx { zigma } { template-not-found }
           { \zigma@template }
           { ieee-conference,~nature,~thesis-simple }
-          { See~zigma-class/templates/README.md }
+          { See~templates/README.md }
       }
   }
 \ExplSyntaxOff
@@ -277,9 +277,9 @@
 % Load the renderer
 \zigma_log:x { [ZIGMA]~Loading~renderer:~\l_zigma_renderer_name_tl }
 
-\exp_args:Nx \file_if_exist:nTF { zigma-class/baseclasses/\l_zigma_renderer_name_tl /zigma-render.code.tex }
+\exp_args:Nx \file_if_exist:nTF { baseclasses/\l_zigma_renderer_name_tl /zigma-render.code.tex }
   {
-    \exp_args:Nx \file_input:n { zigma-class/baseclasses/\l_zigma_renderer_name_tl /zigma-render.code.tex }
+    \exp_args:Nx \file_input:n { baseclasses/\l_zigma_renderer_name_tl /zigma-render.code.tex }
   }
   {
     \msg_error:nnx { zigma } { renderer-not-found } { \l_zigma_renderer_name_tl }
