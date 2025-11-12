@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-LPPL-blue.svg)](LICENSE)
 [![LaTeX](https://img.shields.io/badge/LaTeX-expl3-008080.svg)](https://www.latex-project.org/)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](zigma/CHANGELOG.md)
 [![CTAN](https://img.shields.io/badge/CTAN-ready-green.svg)](https://ctan.org)
 
 A modern, flexible LaTeX document class for academic journals and scientific publications, built entirely with LaTeX3's `expl3` programming layer. Features a modular base class renderer system for different base class rendering.
@@ -375,8 +375,8 @@ This will display:
 
 ## 📖 Documentation
 
-- **[User Guide](USER_GUIDE.md)** - Complete usage guide for end users
-- **[CHANGELOG](CHANGELOG.md)** - Version history and changes
+- **[User Guide](zigma/USER_GUIDE.md)** - Complete usage guide for end users
+- **[CHANGELOG](zigma/CHANGELOG.md)** - Version history and changes
 - **[AGENTS.md](AGENTS.md)** - AI agent contributions log
 
 ### Examples

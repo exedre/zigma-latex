@@ -3,7 +3,7 @@
 \NeedsTeXFormat{LaTeX2e}[2022-06-01]
 \RequirePackage{expl3}[2022-06-01]
 \ProvidesExplClass
-  {zigma-class/zigma}
+  {zigma}
   {2025-11-09}
   {1.0.0}
   {Zigma class — base class rendering}
@@ -156,15 +156,15 @@
 %% ========================================================================
 %% Load Core Modules (DO NOT MODIFY THESE)
 %% ========================================================================
-\InputIfFileExists{zigma-class/zigma-core.code.tex}{}
+\InputIfFileExists{zigma-core.code.tex}{}
   {\ClassError{zigma}{Missing~zigma-core.code.tex}{}}
-\InputIfFileExists{zigma-class/zigma-keys.code.tex}{}
+\InputIfFileExists{zigma-keys.code.tex}{}
   {\ClassError{zigma}{Missing~zigma-keys.code.tex}{}}
-\InputIfFileExists{zigma-class/zigma-authors.code.tex}{}
+\InputIfFileExists{zigma-authors.code.tex}{}
   {\ClassError{zigma}{Missing~zigma-authors.code.tex}{}}
-\InputIfFileExists{zigma-class/zigma-bib.code.tex}{}
+\InputIfFileExists{zigma-bib.code.tex}{}
   {\ClassError{zigma}{Missing~zigma-bib.code.tex}{}}
-\InputIfFileExists{zigma-class/zigma-crossref.code.tex}{}
+\InputIfFileExists{zigma-crossref.code.tex}{}
   {\ClassError{zigma}{Missing~zigma-crossref.code.tex}{}}
 
 \ExplSyntaxOff
