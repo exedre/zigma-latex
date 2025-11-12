@@ -1,0 +1,99 @@
+%% ============================================================================
+%% Zigma Template: APA Paper
+%% ============================================================================
+%%
+%% This template configures Zigma for APA-style academic papers:
+%% - Article base class, single column
+%% - APA standard margins (1in)
+%% - APA 7th edition citation style
+%% - Running head on first page
+%% - Author note support
+%% - Double spacing (common for APA manuscripts)
+%%
+%% USAGE:
+%%   \documentclass[template=apa-paper]{zigma}
+%%
+%% OVERRIDES:
+%%   User options always win. Template sets defaults only.
+%%
+%% NOTE: This file is loaded from within \ExplSyntaxOn in zigma.cls
+
+% Temporarily switch to normal LaTeX syntax for class option manipulation
+\ExplSyntaxOff
+
+%% ============================================================================
+%% Class Options (apply only if user didn't specify)
+%% ============================================================================
+
+% Base class: article (single column for APA)
+\def\@tempa{extarticle}
+\ifx\zigma@baseclass\@tempa
+  \def\zigma@baseclass{article}
+\fi
+
+% Margins: APA standard (1in all sides)
+\def\@tempa{1.25cm}
+\ifx\zigma@marginleft\@tempa
+  \def\zigma@marginleft{1in}
+  \def\zigma@marginright{1in}
+  \def\zigma@margintop{1in}
+  \def\zigma@marginbottom{1in}
+\fi
+
+% Bibliography preset: APA 7th edition
+\ifx\zigma@bibpreset\@empty
+  \def\zigma@bibpreset{apa}
+  \setbool{zigma@bib}{true}
+\fi
+
+% Switch to expl3 syntax for function definition
+\ExplSyntaxOn
+
+%% ============================================================================
+%% Post-Setup Hook (apply after \zigmasetup)
+%% ============================================================================
+
+\cs_new_protected:Npn \zigma_template_postsetup:
+  {
+    % Header: Running head (short title) on left, page on right
+    \tl_if_empty:NT \g_zigma_header_left_tl
+      {
+        % Use small.title if set, otherwise truncated title
+        \tl_if_empty:NTF \g_zigma_small_title_tl
+          {
+            \tl_gset:Nn \g_zigma_header_left_tl 
+              { \small\MakeUppercase{\g_zigma_title_tl} }
+          }
+          {
+            \tl_gset:Nn \g_zigma_header_left_tl 
+              { \small\MakeUppercase{\g_zigma_small_title_tl} }
+          }
+      }
+    
+    \tl_if_empty:NT \g_zigma_header_right_tl
+      {
+        \tl_gset:Nn \g_zigma_header_right_tl { \thepage }
+      }
+    
+    % Footer: empty (APA style uses headers only)
+    \tl_if_empty:NT \g_zigma_footer_center_tl
+      {
+        \tl_gset:Nn \g_zigma_footer_center_tl { }
+      }
+    
+    % Corresponding marker: none (APA uses author note instead)
+    \tl_if_empty:NT \g_zigma_corresponding_marker_tl
+      {
+        \tl_gset:Nn \g_zigma_corresponding_marker_tl { asterisk }
+      }
+  }
+
+\ExplSyntaxOff
+
+%% ============================================================================
+%% Template Information
+%% ============================================================================
+%% Template: apa-paper
+%% Version: 1.0
+%% Date: 2025-11-07
+%% Description: APA 7th edition style for psychology and social sciences

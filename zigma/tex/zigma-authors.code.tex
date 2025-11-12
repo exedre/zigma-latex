@@ -1,0 +1,307 @@
+%% ============================================================================
+%% Zigma Authors - Multi-Author Management System (expl3)
+%% ============================================================================
+%%
+%% This module provides a robust system for managing multiple authors and their
+%% affiliations in academic documents. It uses expl3 property lists to store
+%% author data and provides a clean interface for setting and retrieving
+%% author information.
+%%
+%% ARCHITECTURE:
+%% 
+%% 1. Each author is identified by a numeric ID (0, 1, 2, ...)
+%% 2. Author data is stored in a property list named g_zigma_author_prop_<ID>
+%% 3. A global sequence \g_zigma_author_ids_seq tracks all registered author IDs
+%% 4. Affiliations are stored separately in \g_zigma_affil_prop (id -> name)
+%%
+%% AUTHOR PROPERTIES:
+%%   - name: Author's full name
+%%   - email: Contact email address
+%%   - orcid: ORCID identifier
+%%   - affiliation: Comma-separated list of affiliation IDs (e.g., "0,2")
+%%   - corresponding: Boolean flag (true/false) for corresponding author
+%%
+%% USAGE PATTERN:
+%%   1. Create affiliations with \zigma_affiliation_set:nn {0} {University}
+%%   2. Create author with \zigma_author_create:nN {0} \l_handle
+%%   3. Set properties with \zigma_author_set_property_handle:Nnn
+%%   4. Display all authors with \zigma_authors_show:
+%%
+%% INTEGRATION:
+%%   This module is called by zigma-keys.code.tex when processing
+%%   \zigmasetup{ authors.N.field = value } keys.
+%%
+\ExplSyntaxOn
+
+%% ============================================================================
+%% Data Structures
+%% ============================================================================
+
+% Global property list: affiliation ID -> affiliation name/institution
+\prop_new:N \g_zigma_affil_prop
+
+% Local integer for temporary calculations
+\int_new:N  \l_zigma_tmp_int
+
+%% ============================================================================
+%% expl3 Variants Generation
+%% ============================================================================
+%% Generate variants to allow dynamic csname construction and value expansion.
+%% These variants are essential for working with computed property list names.
+
+\cs_generate_variant:Nn \prop_new:N     { c }    % Create prop from csname
+\cs_generate_variant:Nn \prop_gput:Nnn  { c }    % Put to prop via csname
+\cs_generate_variant:Nn \prop_get:NnN   { c }    % Get from prop via csname
+\cs_generate_variant:Nn \cs_if_exist:NTF{ c }    % Check csname existence
+\cs_generate_variant:Nn \prop_show:N    { c }    % Debug: show prop via csname
+
+%% ============================================================================
+%% Affiliation Management
+%% ============================================================================
+
+%% \zigma_affiliation_set:nn {<id>} {<name>}
+%%
+%% Register an affiliation with a numeric ID.
+%%
+%% Arguments:
+%%   #1 - Affiliation ID (usually 0, 1, 2, ...)
+%%   #2 - Full affiliation text (e.g., "University of Rome")
+%%
+%% Example:
+%%   \zigma_affiliation_set:nn {0} {University~of~Rome}
+%%   \zigma_affiliation_set:nn {1} {CERN,~Geneva}
+%%
+\cs_new_protected:Npn \zigma_affiliation_set:nn #1#2
+  {
+    \tl_set:Nn \l_tmpa_tl {#2}
+    \tl_trim_spaces:N \l_tmpa_tl
+    \prop_gput:NnV \g_zigma_affil_prop {#1} \l_tmpa_tl
+  }
+
+% Generate V and Vn variants to accept token list for first argument
+\cs_generate_variant:Nn \zigma_affiliation_set:nn { V, Vn }
+
+%% ============================================================================
+%% Boolean Normalization
+%% ============================================================================
+
+%% \zigma_bool_norm:n {<value>}
+%%
+%% Normalize user input to standard true/false boolean string.
+%% Accepts: true, yes, on, 1 -> "true"
+%%          false, no, off, 0 -> "false"
+%%          anything else -> "false"
+%%
+%% This ensures consistent boolean representation regardless of user input.
+%%
+\cs_new:Npn \zigma_bool_norm:n #1 {
+  \str_case:nnF { \tl_lower_case:n {#1} }
+    { {true}{true} {yes}{true} {on}{true} {1}{true} 
+      {false}{false} {no}{false} {off}{false} {0}{false} }
+    { false }
+}
+
+%% ============================================================================
+%% Author Storage and Registration
+%% ============================================================================
+
+% Global sequence: stores all registered author IDs in order
+\seq_new:N \g_zigma_author_ids_seq
+
+%% \zigma_author_name_from_id:n {<id>}
+%%
+%% Generate the property list csname for an author ID.
+%% This is a pure expansion function that constructs the name
+%% "g_zigma_author_prop_<id>" for use with :c variants.
+%%
+%% Example: \zigma_author_name_from_id:n {0} -> "g_zigma_author_prop_0"
+%%
+\cs_new:Npn \zigma_author_name_from_id:n #1 { g_zigma_author_prop_#1 }
+
+%% \zigma_author_ensure_exist:n {<id>}
+%%
+%% Ensure an author property list exists for the given ID.
+%% If the author doesn't exist, this function:
+%%   1. Creates a new property list g_zigma_author_prop_<id>
+%%   2. Stores the ID in the property list itself
+%%   3. Registers the ID in the global sequence \g_zigma_author_ids_seq
+%%
+%% This function is idempotent: calling it multiple times is safe.
+%%
+%% Arguments:
+%%   #1 - Author ID (numeric)
+%%
+\cs_new_protected:Npn \zigma_author_ensure_exist:n #1
+  {
+    \cs_if_exist:cTF { \zigma_author_name_from_id:n {#1} }
+      { } % Author already exists, do nothing
+      {
+        % Create new property list for this author
+        \prop_new:c { \zigma_author_name_from_id:n {#1} }
+        % Store the ID itself in the property list
+        \prop_gput:cnn { \zigma_author_name_from_id:n {#1} } { id } {#1}
+        % Register ID in global sequence (if not already present)
+        \seq_if_in:NnF \g_zigma_author_ids_seq {#1}
+          { \seq_gput_right:Nn \g_zigma_author_ids_seq {#1} }
+      }
+  }
+
+%% ============================================================================
+%% Author Creation
+%% ============================================================================
+
+%% \zigma_author_create:nN {<id>} <handle>
+%%
+%% Create or retrieve an author by ID and store the ID in a handle variable.
+%% This is the main entry point for author creation.
+%%
+%% Arguments:
+%%   #1 - Author ID (numeric)
+%%   #2 - Token list to receive the ID (acts as a "handle")
+%%
+%% Example:
+%%   \zigma_author_create:nN {0} \l_my_author_handle
+%%   % Now \l_my_author_handle contains "0"
+%%
+\cs_set_protected:Npn \zigma_author_create:nN #1#2
+  {
+    \zigma_author_ensure_exist:n {#1}
+    \tl_set:Nn #2 {#1} % Store ID in handle for later use
+  }
+
+%% ============================================================================
+%% Author Property Setters and Getters (ID-based)
+%% ============================================================================
+
+%% \zigma_author_set_property:nnn {<id>} {<key>} {<value>}
+%%
+%% Set a property for an author identified by ID.
+%% Ensures the author exists before setting the property.
+%%
+%% Arguments:
+%%   #1 - Author ID
+%%   #2 - Property key (name, email, orcid, affiliation, corresponding)
+%%   #3 - Property value
+%%
+%% Example:
+%%   \zigma_author_set_property:nnn {0} {name} {Albert~Einstein}
+%%   \zigma_author_set_property:nnn {0} {email} {albert@ias.edu}
+%%
+\cs_set_protected:Npn \zigma_author_set_property:nnn #1#2#3
+  {
+    \zigma_author_ensure_exist:n {#1}
+    \prop_gput:cnn { \zigma_author_name_from_id:n {#1} } {#2} {#3}
+  }
+
+%% \zigma_author_get_property:nnN {<id>} {<key>} <result>
+%%
+%% Retrieve a property value for an author.
+%% Returns \q_no_value if the property doesn't exist.
+%%
+%% Arguments:
+%%   #1 - Author ID
+%%   #2 - Property key
+%%   #3 - Token list to receive the value
+%%
+\cs_set_protected:Npn \zigma_author_get_property:nnN #1#2#3
+  {
+    \zigma_author_ensure_exist:n {#1}
+    \prop_get:cnN { \zigma_author_name_from_id:n {#1} } {#2} #3
+  }
+
+%% ============================================================================
+%% Author Property Interface (Handle-based)
+%% ============================================================================
+%% These functions work with a "handle" (token list containing the author ID)
+%% instead of the ID directly. This provides a more convenient API when
+%% the same author is accessed multiple times.
+
+%% \zigma_author_set_property_handle:Nnn <handle> {<key>} {<value>}
+%%
+%% Set a property using a handle variable instead of direct ID.
+%% The handle must contain the author ID (set by \zigma_author_create:nN).
+%%
+%% Arguments:
+%%   #1 - Handle (token list containing author ID)
+%%   #2 - Property key
+%%   #3 - Property value
+%%
+%% Example:
+%%   \zigma_author_create:nN {0} \l_handle
+%%   \zigma_author_set_property_handle:Nnn \l_handle {name} {Einstein}
+%%
+\cs_new_protected:Npn \zigma_author_set_property_handle:Nnn #1#2#3
+  { \prop_gput:cnn { \zigma_author_name_from_id:n { \tl_use:N #1 } } {#2} {#3} }
+
+%% \zigma_author_get_property_handle:NnN <handle> {<key>} <result>
+%%
+%% Get a property using a handle variable.
+%%
+%% Arguments:
+%%   #1 - Handle (token list containing author ID)
+%%   #2 - Property key
+%%   #3 - Token list to receive the value
+%%
+\cs_new_protected:Npn \zigma_author_get_property_handle:NnN #1#2#3
+  { \prop_get:cN { \zigma_author_name_from_id:n { \tl_use:N #1 } } {#2} #3 }
+
+%% ============================================================================
+%% Author Listing and Display
+%% ============================================================================
+
+%% \zigma_authors_show:
+%%
+%% Display all registered authors and their properties on the terminal.
+%% This function iterates through all registered author IDs and prints
+%% a formatted summary of each author's data.
+%%
+%% Output format:
+%%   === ZIGMA AUTHORS START===
+%%   count = <number of authors>
+%%   Affiliations:
+%%   [0] <affiliation 0>
+%%   [1] <affiliation 1>
+%%   id=<id> name=<name> email=<email> orcid=<orcid> affil=<affil> corr=<corr>
+%%   ...
+%%   === ZIGMA AUTHORS END===
+%%
+%% This function is typically called when debug = true is set.
+%%
+\cs_new_protected:Npn \zigma_authors_show:
+  {
+    \iow_term:n {===~ZIGMA~AUTHORS~START===}
+    \iow_term:x { count = \seq_count:N  \g_zigma_author_ids_seq }
+    
+    % Display all affiliations
+    \iow_term:n { Affiliations: }
+    \prop_map_inline:Nn \g_zigma_affil_prop { \iow_term:x { [##1]~##2 } }
+    
+    % Iterate through all registered author IDs
+    \seq_map_inline:Nn \g_zigma_author_ids_seq
+      {
+        \cs_if_exist:cT { \zigma_author_name_from_id:n {##1} }
+          {
+            % Retrieve all author properties
+            \prop_get:cnN { \zigma_author_name_from_id:n {##1} } { name }         \l_tmpa_tl
+            \prop_get:cnN { \zigma_author_name_from_id:n {##1} } { email }        \l_tmpb_tl
+            \prop_get:cnN { \zigma_author_name_from_id:n {##1} } { orcid }        \l_tmpc_tl
+            \prop_get:cnN { \zigma_author_name_from_id:n {##1} } { affiliation }  \l_tmpd_tl
+            \prop_get:cnN { \zigma_author_name_from_id:n {##1} } { corresponding } \l_tmpe_tl
+            
+            % Format output line
+            \tl_set:Nx \l__zigma_line_tl
+              {
+                id=\tl_to_str:n {##1} ~
+                name=\tl_to_str:V { \l_tmpa_tl } ~
+                email=\tl_to_str:V { \l_tmpb_tl } ~
+                orcid=\tl_to_str:V { \l_tmpc_tl } ~
+                affil=\tl_to_str:V { \l_tmpd_tl } ~
+                corr=\tl_to_str:V { \l_tmpe_tl }
+              }
+            \typeout{\tl_use:N \l__zigma_line_tl}
+          }
+      }
+    \iow_term:n {===~ZIGMA~AUTHORS~END===}
+  }
+
+\ExplSyntaxOff

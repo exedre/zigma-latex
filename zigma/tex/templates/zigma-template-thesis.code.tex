@@ -1,0 +1,103 @@
+%% ============================================================================
+%% Zigma Template: Simple Thesis
+%% ============================================================================
+%%
+%% This template configures Zigma for thesis/dissertation format:
+%% - Memoir base class (for chapters)
+%% - Standard academic margins (1in)
+%% - Numeric sorted bibliography
+%% - Chapter support
+%% - Single column layout
+%%
+%% USAGE:
+%%   \documentclass[template=thesis-simple]{zigma}
+%%
+%% OVERRIDES:
+%%   User options always win. Template sets defaults only.
+%%
+%% NOTE: This file is loaded from within \ExplSyntaxOn in zigma.cls
+
+% Temporarily switch to normal LaTeX syntax for class option manipulation
+\ExplSyntaxOff
+
+%% ============================================================================
+%% Class Options (apply only if user didn't specify)
+%% ============================================================================
+
+% Base class: memoir (for thesis/book structure)
+\def\@tempa{extarticle}
+\ifx\zigma@baseclass\@tempa
+  % Default value, set to memoir for thesis
+  \def\zigma@baseclass{memoir}
+\else
+  % User specified something else
+  \def\@tempb{memoir}
+  \ifx\zigma@baseclass\@tempb
+    % User chose memoir, OK
+  \else
+    % User chose something else (article, koma, etc.)
+    \typeout{[TEMPLATE WARNING] thesis-simple expects memoir, but baseclass=\zigma@baseclass\space specified}
+    \typeout{[TEMPLATE WARNING] Using user choice: \zigma@baseclass}
+  \fi
+\fi
+
+% Margins: Academic standard (1in all around)
+\def\@tempa{1.25cm}
+\ifx\zigma@marginleft\@tempa
+  \def\zigma@marginleft{1in}
+  \def\zigma@marginright{1in}
+  \def\zigma@margintop{1in}
+  \def\zigma@marginbottom{1in}
+\fi
+
+% Bibliography preset: Numeric sorted (common for theses)
+\ifx\zigma@bibpreset\@empty
+  \def\zigma@bibpreset{numeric}
+  \setbool{zigma@bib}{true}
+\fi
+
+% Switch to expl3 syntax for function definition
+\ExplSyntaxOn
+
+%% ============================================================================
+%% Post-Setup Hook (apply after \zigmasetup)
+%% ============================================================================
+
+\cs_new_protected:Npn \zigma_template_postsetup:
+  {
+    % Header: chapter name on left, page on right
+    \tl_if_empty:NT \g_zigma_header_left_tl
+      {
+        \tl_gset:Nn \g_zigma_header_left_tl 
+          { 
+            \small\itshape\leftmark 
+          }
+      }
+    
+    \tl_if_empty:NT \g_zigma_header_right_tl
+      {
+        \tl_gset:Nn \g_zigma_header_right_tl { \thepage }
+      }
+    
+    % Footer: empty (headers contain page numbers)
+    \tl_if_empty:NT \g_zigma_footer_center_tl
+      {
+        \tl_gset:Nn \g_zigma_footer_center_tl { }
+      }
+    
+    % Corresponding marker: envelope (academic style)
+    \tl_if_empty:NT \g_zigma_corresponding_marker_tl
+      {
+        \tl_gset:Nn \g_zigma_corresponding_marker_tl { envelope }
+      }
+  }
+
+\ExplSyntaxOff
+
+%% ============================================================================
+%% Template Information
+%% ============================================================================
+%% Template: thesis-simple
+%% Version: 1.0
+%% Date: 2025-11-07
+%% Description: Simple thesis/dissertation format with memoir class

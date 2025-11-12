@@ -1,0 +1,571 @@
+%% ============================================================================
+%% Zigma Bibliography Management (expl3)
+%% ============================================================================
+%%
+%% This module provides bibliography integration with biblatex and natbib.
+%% It handles automatic package loading, style configuration, and provides
+%% preset configurations for common citation styles.
+%%
+%% FEATURES:
+%%   - Auto-detection of backend (biblatex/natbib)
+%%   - Style presets (IEEE, APA, Chicago, Nature, etc.)
+%%   - Automatic \addbibresource configuration
+%%   - Helper commands for citations
+%%
+%% USAGE:
+%%   \zigmasetup{
+%%     bib.enable = true,
+%%     bib.preset = ieee,
+%%     bib.file = references.bib,
+%%   }
+%%
+\ExplSyntaxOn
+
+%% ============================================================================
+%% Preset Configurations
+%% ============================================================================
+
+%% Map preset names to biblatex/natbib styles
+\prop_new:N \g_zigma_bib_presets_prop
+
+% IEEE preset (numeric, sorted)
+\prop_gput:Nnn \g_zigma_bib_presets_prop { ieee }
+  { backend=biblatex, style=ieee, sorting=none }
+
+% APA preset (authoryear)
+\prop_gput:Nnn \g_zigma_bib_presets_prop { apa }
+  { backend=biblatex, style=apa, sorting=nyt }
+
+% Chicago preset (authoryear)
+\prop_gput:Nnn \g_zigma_bib_presets_prop { chicago }
+  { backend=biblatex, style=chicago-authordate, sorting=nyt }
+
+% Nature preset (numeric, unsorted)
+\prop_gput:Nnn \g_zigma_bib_presets_prop { nature }
+  { backend=biblatex, style=nature, sorting=none }
+
+% Numeric preset (basic numeric)
+\prop_gput:Nnn \g_zigma_bib_presets_prop { numeric }
+  { backend=biblatex, style=numeric, sorting=nyt }
+
+%% ============================================================================
+%% Bibliography Type Names
+%% ============================================================================
+%% Map biblatex entry types to human-readable titles
+
+\prop_new:N \g_zigma_bib_type_names_prop
+
+\prop_gput:Nnn \g_zigma_bib_type_names_prop { book } { Books }
+\prop_gput:Nnn \g_zigma_bib_type_names_prop { article } { Articles }
+\prop_gput:Nnn \g_zigma_bib_type_names_prop { inproceedings } { Conference~Proceedings }
+\prop_gput:Nnn \g_zigma_bib_type_names_prop { proceedings } { Proceedings }
+\prop_gput:Nnn \g_zigma_bib_type_names_prop { incollection } { Book~Chapters }
+\prop_gput:Nnn \g_zigma_bib_type_names_prop { thesis } { Theses }
+\prop_gput:Nnn \g_zigma_bib_type_names_prop { phdthesis } { PhD~Theses }
+\prop_gput:Nnn \g_zigma_bib_type_names_prop { mastersthesis } { Master's~Theses }
+\prop_gput:Nnn \g_zigma_bib_type_names_prop { techreport } { Technical~Reports }
+\prop_gput:Nnn \g_zigma_bib_type_names_prop { manual } { Manuals }
+\prop_gput:Nnn \g_zigma_bib_type_names_prop { online } { Online~Resources }
+\prop_gput:Nnn \g_zigma_bib_type_names_prop { misc } { Miscellaneous }
+\prop_gput:Nnn \g_zigma_bib_type_names_prop { unpublished } { Unpublished~Works }
+
+%% Get human-readable name for bibtype
+\cs_new:Npn \zigma_bib_type_name:n #1
+  {
+    \prop_get:NnNTF \g_zigma_bib_type_names_prop {#1} \l_tmpa_tl
+      { \tl_use:N \l_tmpa_tl }
+      { Bibliography } % fallback
+  }
+
+% Authoryear preset (basic author-year)
+\prop_gput:Nnn \g_zigma_bib_presets_prop { authoryear }
+  { backend=biblatex, style=authoryear, sorting=nyt }
+
+% Harvard preset (authoryear variant, widely used in humanities/social sciences)
+\prop_gput:Nnn \g_zigma_bib_presets_prop { harvard }
+  { backend=biblatex, style=authoryear, sorting=nyt, citestyle=authoryear }
+
+% Vancouver preset (numeric, medical/health sciences standard)
+\prop_gput:Nnn \g_zigma_bib_presets_prop { vancouver }
+  { backend=biblatex, style=numeric-comp, sorting=none, maxcitenames=3 }
+
+% MLA preset (Modern Language Association, humanities)
+\prop_gput:Nnn \g_zigma_bib_presets_prop { mla }
+  { backend=biblatex, style=mla, sorting=nyt }
+
+% Alphabetic preset (alphabetic labels like [Ein05])
+\prop_gput:Nnn \g_zigma_bib_presets_prop { alphabetic }
+  { backend=biblatex, style=alphabetic, sorting=nyt }
+
+% Verbose preset (full citations in footnotes, humanities)
+\prop_gput:Nnn \g_zigma_bib_presets_prop { verbose }
+  { backend=biblatex, style=verbose, sorting=nyt }
+
+% Trad-abbrv preset (traditional BibTeX abbreviations)
+\prop_gput:Nnn \g_zigma_bib_presets_prop { trad-abbrv }
+  { backend=biblatex, style=trad-abbrv, sorting=nyt }
+
+% ACM preset (Association for Computing Machinery)
+\prop_gput:Nnn \g_zigma_bib_presets_prop { acm }
+  { backend=biblatex, style=acm, sorting=nyt }
+
+% Philosophy preset (verbose style with full citations)
+\prop_gput:Nnn \g_zigma_bib_presets_prop { philosophy }
+  { backend=biblatex, style=philosophy-verbose, sorting=nyt }
+
+%% ============================================================================
+%% Preset Application
+%% ============================================================================
+
+\cs_new_protected:Npn \zigma_bib_apply_preset:n #1
+  {
+    % Check if preset exists
+    \prop_if_in:NnTF \g_zigma_bib_presets_prop {#1}
+      {
+        \zigma_log:n { [ZIGMA~BIB]~Applying~preset:~#1 }
+        
+        % Get preset config
+        \tl_clear:N \l_tmpa_tl
+        \prop_get:NnN \g_zigma_bib_presets_prop {#1} \l_tmpa_tl
+        
+        % Parse preset config (simplified - would need proper parsing)
+        % For now, apply based on known presets
+        \str_case:nn {#1}
+          {
+            { ieee }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {ieee}
+                \bool_gset_false:N \g_zigma_bib_sorting_bool
+              }
+            { apa }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {apa}
+                \bool_gset_true:N \g_zigma_bib_sorting_bool
+              }
+            { chicago }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {chicago-authordate}
+                \bool_gset_true:N \g_zigma_bib_sorting_bool
+              }
+            { nature }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {nature}
+                \bool_gset_false:N \g_zigma_bib_sorting_bool
+              }
+            { numeric }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {numeric}
+                \bool_gset_true:N \g_zigma_bib_sorting_bool
+              }
+            { authoryear }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {authoryear}
+                \bool_gset_true:N \g_zigma_bib_sorting_bool
+              }
+            { harvard }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {authoryear}
+                \bool_gset_true:N \g_zigma_bib_sorting_bool
+              }
+            { vancouver }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {numeric-comp}
+                \bool_gset_false:N \g_zigma_bib_sorting_bool
+              }
+            { mla }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {mla}
+                \bool_gset_true:N \g_zigma_bib_sorting_bool
+              }
+            { alphabetic }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {alphabetic}
+                \bool_gset_true:N \g_zigma_bib_sorting_bool
+              }
+            { verbose }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {verbose}
+                \bool_gset_true:N \g_zigma_bib_sorting_bool
+              }
+            { trad-abbrv }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {trad-abbrv}
+                \bool_gset_true:N \g_zigma_bib_sorting_bool
+              }
+            { acm }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {acm}
+                \bool_gset_true:N \g_zigma_bib_sorting_bool
+              }
+            { philosophy }
+              {
+                \tl_gset:Nn \g_zigma_bib_backend_tl {biblatex}
+                \tl_gset:Nn \g_zigma_bib_style_tl {philosophy-verbose}
+                \bool_gset_true:N \g_zigma_bib_sorting_bool
+              }
+          }
+      }
+      {
+        \zigma_log:n { [ZIGMA~BIB]~WARNING:~Unknown~preset~'#1' }
+      }
+  }
+
+\cs_generate_variant:Nn \zigma_bib_apply_preset:n { V }
+
+%% ============================================================================
+%% Bibliography Package Loading
+%% ============================================================================
+
+\cs_new_protected:Npn \zigma_bib_load:
+  {
+    % Only load if enabled
+    \bool_if:NT \g_zigma_bib_enable_bool
+      {
+        \zigma_log:n { [ZIGMA~BIB]~Loading~bibliography~support }
+        
+        % Apply preset if specified
+        \tl_if_empty:NF \g_zigma_bib_preset_tl
+          {
+            \zigma_bib_apply_preset:n { \tl_use:N \g_zigma_bib_preset_tl }
+          }
+        
+        % Load backend package
+        \str_case:Vn \g_zigma_bib_backend_tl
+          {
+            { biblatex }
+              {
+                \zigma_log:n { [ZIGMA~BIB]~Using~biblatex~backend }
+                \zigma_bib_load_biblatex:
+              }
+            { natbib }
+              {
+                \zigma_log:n { [ZIGMA~BIB]~Using~natbib~backend }
+                \zigma_bib_load_natbib:
+              }
+          }
+        
+        % Add bibliography resource if file specified
+        \tl_if_empty:NF \g_zigma_bib_file_tl
+          {
+            \zigma_bib_add_resource:V \g_zigma_bib_file_tl
+          }
+      }
+  }
+
+%% Load biblatex with options
+\cs_new_protected:Npn \zigma_bib_load_biblatex:
+  {
+    % Build options list
+    \tl_clear:N \l_tmpa_tl
+    
+    % Add style
+    \tl_if_empty:NF \g_zigma_bib_style_tl
+      {
+        \tl_put_right:Nn \l_tmpa_tl { style= }
+        \tl_put_right:NV \l_tmpa_tl \g_zigma_bib_style_tl
+      }
+    
+    % Add sorting
+    \bool_if:NTF \g_zigma_bib_sorting_bool
+      { \tl_put_right:Nn \l_tmpa_tl { ,sorting=nyt } }
+      { \tl_put_right:Nn \l_tmpa_tl { ,sorting=none } }
+    
+    % Add backend
+    \tl_put_right:Nn \l_tmpa_tl { ,backend=biber }
+    
+    % Load package
+    \exp_args:No \PassOptionsToPackage { \tl_use:N \l_tmpa_tl } {biblatex}
+    \RequirePackage{biblatex}
+    
+    \zigma_log:n { [ZIGMA~BIB]~Biblatex~loaded~with~options:~\tl_use:N\l_tmpa_tl }
+  }
+
+%% Load natbib with options
+\cs_new_protected:Npn \zigma_bib_load_natbib:
+  {
+    % Natbib options based on style
+    \str_if_eq:VnTF \g_zigma_bib_style_tl { authoryear }
+      { \PassOptionsToPackage{authoryear}{natbib} }
+      { \PassOptionsToPackage{numbers}{natbib} }
+    
+    \RequirePackage{natbib}
+    \zigma_log:n { [ZIGMA~BIB]~Natbib~loaded }
+  }
+
+%% Add bibliography resource
+\cs_new_protected:Npn \zigma_bib_add_resource:n #1
+  {
+    \str_case:Vn \g_zigma_bib_backend_tl
+      {
+        { biblatex }
+          {
+            \addbibresource{#1}
+            \zigma_log:n { [ZIGMA~BIB]~Added~resource:~#1 }
+          }
+        { natbib }
+          {
+            % Natbib uses \bibliography{} in document body
+            \zigma_log:n { [ZIGMA~BIB]~Resource~'#1'~will~be~used~with~\bibliography }
+          }
+      }
+  }
+
+\cs_generate_variant:Nn \zigma_bib_add_resource:n { V }
+
+%% ============================================================================
+%% Helper Commands for Users
+%% ============================================================================
+
+% \zigmacite - Smart citation command that works with both backends
+\NewDocumentCommand{\zigmacite}{o m}
+  {
+    \IfNoValueTF{#1}
+      {
+        % No optional argument
+        \str_case:Vn \g_zigma_bib_backend_tl
+          {
+            { biblatex } { \cite{#2} }
+            { natbib } { \citep{#2} }
+          }
+      }
+      {
+        % With optional argument (prenote/postnote)
+        \str_case:Vn \g_zigma_bib_backend_tl
+          {
+            { biblatex } { \cite[#1]{#2} }
+            { natbib } { \citep[#1]{#2} }
+          }
+      }
+  }
+
+% \zigmatextcite - Textual citation
+\NewDocumentCommand{\zigmatextcite}{o m}
+  {
+    \IfNoValueTF{#1}
+      {
+        \str_case:Vn \g_zigma_bib_backend_tl
+          {
+            { biblatex } { \textcite{#2} }
+            { natbib } { \citet{#2} }
+          }
+      }
+      {
+        \str_case:Vn \g_zigma_bib_backend_tl
+          {
+            { biblatex } { \textcite[#1]{#2} }
+            { natbib } { \citet[#1]{#2} }
+          }
+      }
+  }
+
+% \zigmaprintbib - Print bibliography with advanced filtering
+% Usage:
+%   \zigmaprintbib                         % Print all
+%   \zigmaprintbib[My Title]               % Custom title
+%   \zigmaprintbib[type=book]              % Only books (auto title: "Books")
+%   \zigmaprintbib[nottype=misc]           % Exclude misc (auto title: "Bibliography (excluding Miscellaneous)")
+%   \zigmaprintbib[keyword=ml]             % By keyword (no auto title)
+%   \zigmaprintbib[category=primary]       % By category (biblatex)
+%   \zigmaprintbib[segment=1]              % By segment (refsegment)
+%   \zigmaprintbib[env=bibliography]       % By environment
+%
+% Supported filters (pass-through to biblatex):
+%   - type=<type>        Include only this type (auto-title)
+%   - nottype=<type>     Exclude this type (auto-title with exclusion)
+%   - keyword=<keyword>  Filter by keyword
+%   - category=<cat>     Filter by category
+%   - segment=<N>        Filter by refsegment
+%   - env=<env>          Filter by environment
+%   - Multiple filters can be combined with commas
+%
+% Auto-title types: book, article, inproceedings, phdthesis, online, misc, etc.
+\NewDocumentCommand{\zigmaprintbib}{o}
+  {
+    \str_case:Vn \g_zigma_bib_backend_tl
+      {
+        { biblatex }
+          {
+            \IfNoValueTF{#1}
+              { 
+                % No argument: print all
+                \printbibliography 
+              }
+              {
+                % Parse argument for filters
+                \tl_set:Nn \l_tmpa_tl {#1}
+                
+                % Check if it's a filter (contains =) or just a title
+                \tl_if_in:NnTF \l_tmpa_tl { = }
+                  {
+                    % It's a filter: try to extract type and generate auto-title
+                    \regex_extract_once:nnNTF { type\s*=\s*([a-z]+) } {#1} \l_tmpb_seq
+                      {
+                        % Extract type value
+                        \tl_set:Nx \l_tmpb_tl { \seq_item:Nn \l_tmpb_seq { 2 } }
+                        % Get human-readable name
+                        \prop_get:NVNTF \g_zigma_bib_type_names_prop \l_tmpb_tl \l_tmpc_tl
+                          {
+                            % Print with auto-title
+                            \begingroup
+                            \edef\x{\endgroup\noexpand\printbibliography[#1,title={\l_tmpc_tl}]}\x
+                          }
+                          {
+                            % Type not in map, use default
+                            \printbibliography[#1,title={Bibliography}]
+                          }
+                      }
+                      {
+                        % Try nottype filter
+                        \regex_extract_once:nnNTF { nottype\s*=\s*([a-z]+) } {#1} \l_tmpb_seq
+                          {
+                            % Extract type value
+                            \tl_set:Nx \l_tmpb_tl { \seq_item:Nn \l_tmpb_seq { 2 } }
+                            % Get human-readable name
+                            \prop_get:NVNTF \g_zigma_bib_type_names_prop \l_tmpb_tl \l_tmpc_tl
+                              {
+                                % Print with exclusion title
+                                \begingroup
+                                \edef\x{\endgroup\noexpand\printbibliography[#1,title={Bibliography~(excluding~\l_tmpc_tl)}]}\x
+                              }
+                              {
+                                % Type not in map, generic title
+                                \printbibliography[#1,title={Bibliography}]
+                              }
+                          }
+                          {
+                            % Other filter (keyword, category, etc.): use as-is
+                            \printbibliography[#1]
+                          }
+                      }
+                  }
+                  {
+                    % Just a title: use old behavior
+                    \printbibliography[title={#1}]
+                  }
+              }
+          }
+        { natbib }
+          {
+            \IfNoValueTF{#1}
+              { \bibliography{\g_zigma_bib_file_tl} }
+              { \renewcommand{\refname}{#1}\bibliography{\g_zigma_bib_file_tl} }
+          }
+      }
+  }
+
+%% \zigmasplitbib - Print multiple bibliography sections by type
+%% Usage: \zigmasplitbib{book,article,online}
+\NewDocumentCommand{\zigmasplitbib}{m}
+  {
+    \str_case:Vn \g_zigma_bib_backend_tl
+      {
+        { biblatex }
+          {
+            \clist_map_inline:nn {#1}
+              {
+                \tl_set:Nn \l_tmpa_tl { ##1 }
+                \tl_trim_spaces:N \l_tmpa_tl
+                % Get human-readable name
+                \prop_get:NVNTF \g_zigma_bib_type_names_prop \l_tmpa_tl \l_tmpb_tl
+                  {
+                    % Print section with proper expansion
+                    \begingroup
+                    \edef\x{\endgroup\noexpand\printbibliography[type=\l_tmpa_tl,title={\l_tmpb_tl}]}\x
+                  }
+                  {
+                    % Type not found, use generic title
+                    \begingroup
+                    \edef\x{\endgroup\noexpand\printbibliography[type=\l_tmpa_tl,title={Bibliography}]}\x
+                  }
+              }
+          }
+        { natbib }
+          {
+            \PackageWarning{zigma}{Split~bibliography~requires~biblatex~backend.~Command~ignored.}
+          }
+      }
+  }
+
+%% ============================================================================
+%% Per-Chapter Bibliography Support
+%% ============================================================================
+%% These commands enable separate bibliographies for each chapter,
+%% useful for theses and multi-chapter documents.
+%%
+%% USAGE:
+%%   \zigmastartchapterbib
+%%   \chapter{Introduction}
+%%   Text with citations \cite{ref1}
+%%   \zigmaprintchapterbib
+%%   \zigmaendchapterbib
+%%
+%% NOTE: Only works with biblatex backend (uses refsection)
+
+% Start a new chapter bibliography section
+\NewDocumentCommand{\zigmastartchapterbib}{}
+  {
+    \str_case:Vn \g_zigma_bib_backend_tl
+      {
+        { biblatex }
+          {
+            \begin{refsection}
+            \zigma_log:n { [ZIGMA~BIB]~Starting~new~refsection }
+          }
+        { natbib }
+          {
+            \PackageWarning{zigma}{Per-chapter~bibliography~requires~biblatex~backend.~Command~ignored.}
+          }
+      }
+  }
+
+% End chapter bibliography section
+\NewDocumentCommand{\zigmaendchapterbib}{}
+  {
+    \str_case:Vn \g_zigma_bib_backend_tl
+      {
+        { biblatex }
+          {
+            \end{refsection}
+            \zigma_log:n { [ZIGMA~BIB]~Ending~refsection }
+          }
+        { natbib }
+          {
+            % Do nothing - warning already issued in start command
+          }
+      }
+  }
+
+% Print chapter bibliography
+\NewDocumentCommand{\zigmaprintchapterbib}{o}
+  {
+    \str_case:Vn \g_zigma_bib_backend_tl
+      {
+        { biblatex }
+          {
+            \IfNoValueTF{#1}
+              { \printbibliography[heading=subbibliography] }
+              { \printbibliography[heading=subbibliography,title={#1}] }
+          }
+        { natbib }
+          {
+            \PackageWarning{zigma}{Per-chapter~bibliography~requires~biblatex~backend.~Command~ignored.}
+          }
+      }
+  }
+
+\ExplSyntaxOff
+
+%% EOF

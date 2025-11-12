@@ -1,0 +1,118 @@
+%% ============================================================================
+%% Zigma Template: Il Cibernetico Journal
+%% ============================================================================
+%%
+%% This template configures Zigma for Il Cibernetico journal format:
+%% - Rho plugin (academic journal layout)
+%% - Green color theme (#009966)
+%% - IEEE citation style
+%% - Smart headers (small.title fallback to title + lead author)
+%% - Page number in footer center
+%%
+%% USAGE:
+%%   \documentclass[template=ilcibernetico,bibfile=refs.bib]{zigma}
+%%
+%% OVERRIDES:
+%%   User options always win. Template sets defaults only.
+%%
+%% NOTE: This file is loaded from within \ExplSyntaxOn in zigma.cls
+
+\ExplSyntaxOff
+
+%% ============================================================================
+%% Class Options (apply only if user didn't specify)
+%% ============================================================================
+
+% Plugin: rho (academic journal)
+\def\@tempa{article}
+\ifx\zigma@plugin\@tempa
+  \def\zigma@plugin{rho}
+\else
+  \def\@tempb{rho}
+  \ifx\zigma@plugin\@tempb
+    % User chose rho, OK
+  \else
+    \typeout{[TEMPLATE WARNING] ilcibernetico expects base=rho, but base=\zigma@plugin\space specified}
+    \typeout{[TEMPLATE WARNING] Using user choice: \zigma@plugin}
+  \fi
+\fi
+
+% Bibliography preset: IEEE (only if empty)
+\ifx\zigma@bibpreset\@empty
+  \def\zigma@bibpreset{ieee}
+  \def\zigma@usebib{true}
+\fi
+
+\ExplSyntaxOn
+
+%% ============================================================================
+%% Post-Setup Hook (apply after \zigmasetup)
+%% ============================================================================
+
+\cs_new_protected:Npn \zigma_template_postsetup:
+  {
+    % Color: Green #009966
+    \tl_if_empty:NT \g_zigma_rhocolor_tl
+      {
+        \tl_gset:Nn \g_zigma_rhocolor_tl { 009966 }
+      }
+    
+    % Journal name
+    \tl_if_empty:NT \g_zigma_journalname_tl
+      {
+        \tl_gset:Nn \g_zigma_journalname_tl { Il~Cibernetico }
+      }
+    
+    % Header left: small.title with fallback to title
+    \tl_if_empty:NT \g_zigma_header_left_tl
+      {
+        \tl_if_empty:NTF \g_zigma_smalltitle_tl
+          {
+            \tl_gset:Nn \g_zigma_header_left_tl 
+              { \small\itshape \tl_use:N \g_zigma_title_tl }
+          }
+          {
+            \tl_gset:Nn \g_zigma_header_left_tl 
+              { \small\itshape \tl_use:N \g_zigma_smalltitle_tl }
+          }
+      }
+    
+    % Header right: lead author + "et al." if multiple authors
+    \tl_if_empty:NT \g_zigma_header_right_tl
+      {
+        \int_compare:nNnTF { \seq_count:N \g_zigma_author_ids_seq } > { 1 }
+          {
+            % Multiple authors: lead author et al.
+            \tl_gset:Nn \g_zigma_header_right_tl 
+              { \small \tl_use:N \g_zigma_leadauthor_tl ~et~al. }
+          }
+          {
+            % Single author: just the name
+            \tl_gset:Nn \g_zigma_header_right_tl 
+              { \small \tl_use:N \g_zigma_leadauthor_tl }
+          }
+      }
+    
+    % Footer center: page number
+    \tl_if_empty:NT \g_zigma_footer_center_tl
+      {
+        \tl_gset:Nn \g_zigma_footer_center_tl { \thepage }
+      }
+    
+    % Corresponding marker: envelope
+    \tl_if_empty:NT \g_zigma_corresponding_marker_tl
+      {
+        \tl_gset:Nn \g_zigma_corresponding_marker_tl { envelope }
+      }
+  }
+
+\ExplSyntaxOff
+
+%% ============================================================================
+%% Template Information
+%% ============================================================================
+%% Template: ilcibernetico
+%% Version: 1.0
+%% Date: 2025-11-07
+%% Author: Zigma Template System
+%% Description: Il Cibernetico journal (green theme, IEEE refs, smart headers)

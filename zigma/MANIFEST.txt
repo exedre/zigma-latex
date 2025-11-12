@@ -1,0 +1,111 @@
+MANIFEST - Zigma LaTeX Class v1.0.0
+
+This file lists all files in the Zigma distribution.
+
+=== RUNTIME FILES (tex/latex/zigma/) ===
+
+zigma.cls                              Main class file (540 lines)
+zigma-core.code.tex                    Core system (478 lines)
+zigma-keys.code.tex                    Key-value processing (598 lines)
+zigma-authors.code.tex                 Author management (301 lines)
+zigma-bib.code.tex                     Bibliography system (582 lines)
+zigma-crossref.code.tex                Cross-references (400 lines)
+zigma-options.code.tex                 Class options (28 lines)
+
+baseclasses/article/zigma-render.code.tex      Article rendering (180 lines)
+baseclasses/memoir/zigma-render.code.tex       Memoir rendering (320 lines)
+baseclasses/koma/zigma-render.code.tex         KOMA-Script rendering (337 lines)
+baseclasses/rho/zigma-render.code.tex          Rho journal rendering (850 lines)
+
+templates/ilcibernetico.template.tex   Il Cibernetico journal template
+templates/ieee.template.tex            IEEE conference template
+templates/apa.template.tex             APA manuscript template
+templates/nature.template.tex          Nature journal template
+templates/thesis.template.tex          Academic thesis template
+templates/template-loader.code.tex     Template loading system
+
+=== DOCUMENTATION (doc/latex/zigma/) ===
+
+README.md                              Quick start guide (350+ lines)
+CHANGELOG.md                           Version history (97 lines - v1.0.0 only)
+LICENSE                                LPPL 1.3c license
+INSTALLATION.md                        Installation instructions (10KB)
+ROADMAP.md                             Development roadmap
+MANIFEST.txt                           This file
+CTAN.ann                               CTAN announcement
+zigma.pdf                              Complete user manual (65 pages, 427KB)
+README.TDS                             TDS installation guide
+
+docs/                                  Technical documentation
+  - CODE_ARCHITECTURE.md               Code structure and architecture
+  - USER_GUIDE.md                      Complete user guide (707 lines)
+  - CITATION_STYLES.md                 Citation style reference
+  - integration/                       Reference manager guides
+    * zotero-integration.md
+    * mendeley-integration.md
+    * reference-managers.md
+
+examples/                              Example documents
+  - README.md                          Examples guide (383 lines)
+  - basic-article.tex                  Simple article example
+  - book-chapter.tex                   Book chapter example
+  - conference-paper.tex               Conference paper example
+  - journal-submission.tex             Journal submission example
+  - template-ilcibernetico.tex         Template demonstration
+  - thesis-chapter.tex                 Thesis chapter example
+  - *.pdf                              Compiled example PDFs
+
+articles/                              Feature articles
+  - bibliography-features.md           Bibliography system guide
+  - (other feature articles)
+
+=== SOURCE FILES (source/latex/zigma/) ===
+
+zigma-manual.tex                       Manual source (1805 lines)
+
+=== FILE COUNTS ===
+
+Runtime files:        17 files
+Documentation files:  40+ files
+Example files:        13 files
+Total:                ~70 files
+
+=== DEPENDENCIES ===
+
+Required:
+  - LuaLaTeX or XeLaTeX
+  - expl3 (part of LaTeX3)
+  - hyperref
+  - xcolor
+  - fancyhdr
+
+Optional (for features):
+  - biblatex (for bibliography)
+  - marvosym (for envelope symbol ✉)
+  - academicons (for ORCID icons)
+  - babel (for multilingual support)
+
+=== VERSION INFORMATION ===
+
+Version:              1.0.0
+Release Date:         2025-11-09
+License:              LPPL 1.3c (The LaTeX Project Public License)
+Author:               Emmanuele Somma <emmanuele@exedre.org>
+Repository:           https://git.xed.it/exedre/zigma-class
+CTAN Page:            https://ctan.org/pkg/zigma
+
+=== INSTALLATION ===
+
+See INSTALLATION.md for detailed installation instructions.
+
+Quick install:
+  tar xzf zigma.tds.tar.gz -C ~/texmf
+  mktexlsr ~/texmf
+
+=== SUPPORT ===
+
+- Manual: zigma.pdf
+- Examples: examples/ directory
+- Issues: https://git.xed.it/exedre/zigma-class/issues
+- Repository: https://git.xed.it/exedre/zigma-class
+

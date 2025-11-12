@@ -1,0 +1,528 @@
+%% Zigma LaTeX Class - Rho Plugin
+%% Rendering implementation for rho-inspired style
+%% Based on rho.cls v2.1.1 by Guillermo Jimenez & Eduardo Gracidas
+
+\ExplSyntaxOn
+
+%% ========================================================================
+%% Rho Plugin - Academic Article Style
+%% ========================================================================
+
+% This plugin provides a rendering layer inspired by the rho class
+% Key features:
+% - Modern academic article layout
+% - Colored abstract boxes (tcolorbox)
+% - Corresponding author section with metadata
+% - DOI, dates (received, revised, accepted, published)
+% - Sans-serif headers, specific font sizes
+% - Twocolumn layout with rho spacing
+% - Compact margins for maximum content
+
+\zigma_log:n { [PLUGIN]~Loading~rho~plugin }
+
+%% ========================================================================
+%% Rho Page Layout
+%% ========================================================================
+
+% Apply rho-specific geometry using class options
+% Defaults: 1.25cm left/right, 2cm top/bottom, 15pt columnsep
+% Override with: \documentclass[marginleft=3cm,margintop=2.5cm,...]{zigma}
+\RequirePackage{geometry}
+\geometry{
+    left=\zigma@marginleft, 
+    right=\zigma@marginright, 
+    top=\zigma@margintop, 
+    bottom=\zigma@marginbottom, 
+    headsep=0.75cm
+}
+
+% Column separation from class option
+\setlength{\columnsep}{\zigma@columnsep}
+
+%% ========================================================================
+%% Required Packages for Rho Style
+%% ========================================================================
+
+\RequirePackage{tcolorbox}
+\RequirePackage{lettrine}   % For drop caps
+\RequirePackage{ragged2e}   % For RaggedRight
+\RequirePackage{fancyhdr}   % For headers and footers
+\RequirePackage{lastpage}   % For total page count
+\RequirePackage{refcount}   % For getting page reference numbers
+
+%% ========================================================================
+%% Rho Color Scheme
+%% ========================================================================
+
+% Define rho color (default: teal/cyan academic color)
+% Users can override with \definecolor{rhocolor}{RGB}{...} in document
+\providecolor{rhocolor}{RGB}{0, 120, 150}  % Teal academic color
+
+%% ========================================================================
+%% Rho Font Definitions
+%% ========================================================================
+
+% Following rho.cls font specifications exactly
+\cs_new:Npn \zigma_rho_title_font: { \color{rhocolor}\sffamily\bfseries\fontsize{16}{22}\selectfont }
+\cs_new:Npn \zigma_rho_author_font: { \fontsize{9}{11}\bfseries\sffamily\selectfont }
+\cs_new:Npn \zigma_rho_affil_font: { \fontsize{7.5}{9}\itshape\selectfont }
+\cs_new:Npn \zigma_rho_abstract_head_font: { \color{rhocolor}\sffamily\fontsize{9}{11}\selectfont\bfseries }
+\cs_new:Npn \zigma_rho_abstract_font: { \color{black}\sffamily\linespread{1}\fontsize{8.5}{11}\selectfont }
+\cs_new:Npn \zigma_rho_keywords_font: { \sffamily\itshape\linespread{1}\fontsize{7.8}{9}\selectfont }
+\cs_new:Npn \zigma_rho_info_font: { \color{black}\sffamily\linespread{1}\fontsize{7.8}{9}\selectfont }
+\cs_new:Npn \zigma_rho_footer_font: { \normalfont\sffamily\fontsize{7}{9}\selectfont }
+
+%% ========================================================================
+%% Header and Footer Setup (Rho Style)
+%% ========================================================================
+
+% Set page style to fancy
+\pagestyle{fancy}
+\pagenumbering{arabic}
+
+% First page style (custom footer with metadata)
+\fancypagestyle{firststyle}{
+  \fancyfoot[L]{
+    \zigma_rho_footer_font:
+    \tl_use:N \g_zigma_footer_left_tl
+  }
+  \fancyfoot[C]{
+    \zigma_rho_footer_font:
+    \tl_use:N \g_zigma_footer_center_tl
+  }
+  \fancyfoot[R]{
+    \zigma_rho_footer_font:
+    \tl_if_empty:NTF \g_zigma_footer_right_tl
+      {
+        \tl_if_empty:NF \g_zigma_institution_tl { \tl_use:N \g_zigma_institution_tl \hspace{10pt} }
+        \tl_if_empty:NF \g_zigma_day_tl { \bfseries \tl_use:N \g_zigma_day_tl \hspace{10pt} }
+        \tl_if_empty:NF \g_zigma_small_title_tl { \tl_use:N \g_zigma_small_title_tl \hspace{10pt} }
+        \bfseries\thepage\textendash\lastpage@lastpage
+      }
+      { \tl_use:N \g_zigma_footer_right_tl }
+  }
+  \fancyhead[C]{}
+  \fancyhead[R]{}
+  \fancyhead[L]{}
+}
+
+% Regular pages header - Use zigma configurable variables if set, otherwise defaults
+\fancyhead[L]{
+  \zigma_rho_footer_font:
+  \tl_if_empty:NTF \g_zigma_header_left_tl
+    { \tl_if_empty:NF \g_zigma_leadauthor_tl { \tl_use:N \g_zigma_leadauthor_tl } }
+    { \tl_use:N \g_zigma_header_left_tl }
+}
+\fancyhead[C]{
+  \zigma_rho_footer_font:
+  \tl_use:N \g_zigma_header_center_tl
+}
+\fancyhead[R]{
+  \zigma_rho_footer_font:
+  \tl_if_empty:NTF \g_zigma_header_right_tl
+    { \tl_if_empty:NF \g_zigma_title_tl { \tl_use:N \g_zigma_title_tl } }
+    { \tl_use:N \g_zigma_header_right_tl }
+}
+
+% Regular pages footer - Use zigma configurable variables if set, otherwise default
+\fancyfoot[L]{
+  \zigma_rho_footer_font:
+  \tl_use:N \g_zigma_footer_left_tl
+}
+\fancyfoot[C]{
+  \zigma_rho_footer_font:
+  \tl_if_empty:NTF \g_zigma_footer_center_tl
+    { \thepage\textendash\lastpage@lastpage }
+    { \tl_use:N \g_zigma_footer_center_tl }
+}
+\fancyfoot[R]{
+  \zigma_rho_footer_font:
+  \tl_use:N \g_zigma_footer_right_tl
+}
+
+% No rules
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+%% ========================================================================
+%% Additional Metadata Commands
+%% ========================================================================
+
+% Rho-specific metadata variables are defined in zigma-keys.code.tex
+% metadata.doi, metadata.url, metadata.received, metadata.revised, 
+% metadata.accepted, metadata.published, metadata.license, institution, footinfo
+
+%% ========================================================================
+%% Maketitle Rendering
+%% ========================================================================
+
+\cs_new_protected:Npn \zigma_rho_render_title:
+  {
+    \zigma_log:n { [RHO~PLUGIN]~Rendering~title }
+    
+    \RaggedRight
+    
+    % Journal name if set (rho style: small, bold, sans)
+    \tl_if_empty:NF \g_zigma_journalname_tl
+      {
+        \group_begin:
+        \sffamily\bfseries\fontsize{8}{14}\selectfont
+        \tl_use:N \g_zigma_journalname_tl
+        % Journal URL link if journal.url is set
+        \tl_if_empty:NF \g_zigma_journal_url_tl
+          {
+            \tl_if_empty:NF \g_zigma_journal_url_show_tl
+              {
+                \c_space_tl
+                \exp_last_unbraced:NV \href \g_zigma_journal_url_tl
+                  { \tl_use:N \g_zigma_journal_url_show_tl }
+              }
+          }
+        \par
+        \group_end:
+        \vskip5pt
+      }
+    
+    % Render title if set (rho style: left-aligned, colored)
+    \tl_if_empty:NF \g_zigma_title_tl
+      {
+        \group_begin:
+        \zigma_rho_title_font:
+        \tl_use:N \g_zigma_title_tl
+        % Title URL link if title.url is set
+        \tl_if_empty:NF \g_zigma_title_url_tl
+          {
+            \tl_if_empty:NF \g_zigma_title_url_show_tl
+              {
+                \c_space_tl
+                \exp_last_unbraced:NV \href \g_zigma_title_url_tl
+                  { \tl_use:N \g_zigma_title_url_show_tl }
+              }
+          }
+        \par
+        \group_end:
+      }
+    
+    % Subtitle if set (smaller, same color)
+    \tl_if_empty:NF \g_zigma_subtitle_tl
+      {
+        \vskip5pt
+        {\color{rhocolor}\sffamily\fontsize{12}{16}\selectfont \tl_use:N \g_zigma_subtitle_tl\par}
+      }
+    
+    \vspace{10pt}
+  }
+
+\cs_new_protected:Npn \zigma_rho_render_authors:
+  {
+    \zigma_log:n { [RHO~PLUGIN]~Rendering~authors }
+    
+    % Get author count from sequence
+    \int_compare:nNnT { \seq_count:N \g_zigma_author_ids_seq } > { 0 }
+      {
+        \RaggedRight
+        % Render author names with affiliation markers
+        \seq_map_indexed_inline:Nn \g_zigma_author_ids_seq
+          {
+            \zigma_rho_render_single_author:n { ##2 }
+            \int_compare:nNnF { ##1 } = { \seq_count:N \g_zigma_author_ids_seq }
+              { ,~ }
+          }
+        \par
+        \vspace{8pt}
+        
+        % Render affiliations
+        \zigma_rho_render_affiliations:
+        \vspace{8pt}
+      }
+  }
+
+\cs_new_protected:Npn \zigma_rho_render_single_author:n #1
+  {
+    % Get author name using ID
+    \tl_clear:N \l_tmpa_tl
+    \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { name } \l_tmpa_tl
+    
+    \quark_if_no_value:NF \l_tmpa_tl
+      {
+        {\zigma_rho_author_font: \tl_use:N \l_tmpa_tl}
+        
+        % Get ORCID and add as link with icon
+        \tl_clear:N \l__zigma_rho_orcid_tl
+        \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { orcid } \l__zigma_rho_orcid_tl
+        
+        \quark_if_no_value:NF \l__zigma_rho_orcid_tl
+          {
+            \tl_if_empty:NF \l__zigma_rho_orcid_tl
+              {
+                \textsuperscript{
+                  \href{https://orcid.org/\tl_use:N\l__zigma_rho_orcid_tl}{\tiny\aiOrcid}
+                }
+              }
+          }
+        
+        % Add corresponding marker if set
+        \tl_clear:N \l__zigma_rho_corr_tl
+        \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { corresponding } \l__zigma_rho_corr_tl
+        
+        \quark_if_no_value:NF \l__zigma_rho_corr_tl
+          {
+            \str_if_eq:VnT \l__zigma_rho_corr_tl { true }
+              {
+                \textsuperscript{
+                  \color{rhocolor}
+                  \str_case:Vn \g_zigma_corresponding_marker_tl
+                    {
+                      { envelope } { \Letter }
+                      { star } { \ensuremath{\star} }
+                      { asterisk } { * }
+                    }
+                }
+              }
+          }
+        
+        % Get affiliation list and add superscript markers
+        \tl_clear:N \l_tmpb_tl
+        \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { affiliation } \l_tmpb_tl
+        
+        \quark_if_no_value:NF \l_tmpb_tl
+          {
+            % Process comma-separated affiliation IDs
+            \tl_if_empty:NF \l_tmpb_tl
+              {
+                \textsuperscript{
+                  \color{rhocolor}
+                  \clist_set:NV \l__zigma_rho_affil_clist \l_tmpb_tl
+                  \clist_map_inline:Nn \l__zigma_rho_affil_clist
+                    {
+                      \zigma_affil_number:n { ##1 }
+                    }
+                }
+              }
+          }
+      }
+  }
+
+\tl_new:N \l__zigma_rho_orcid_tl
+\tl_new:N \l__zigma_rho_corr_tl
+\clist_new:N \l__zigma_rho_affil_clist
+
+% Helper for affiliation numbers (rho uses numbers, not symbols)
+\cs_new:Npn \zigma_affil_number:n #1
+  {
+    \int_eval:n { #1 + 1 }
+  }
+
+\cs_new_protected:Npn \zigma_rho_render_affiliations:
+  {
+    % Iterate through registered affiliations using prop_map
+    \prop_map_inline:Nn \g_zigma_affil_prop
+      {
+        % ##1 = affiliation ID (0, 1, 2, ...)
+        % ##2 = affiliation name
+        \par
+        \noindent
+        {\zigma_rho_affil_font:
+        \textsuperscript{\color{rhocolor}\int_eval:n { ##1 + 1 }}
+        ##2}
+      }
+  }
+
+\cs_new_protected:Npn \zigma_rho_render_date:
+  {
+    % Render date only if date.show is true
+    \bool_if:NT \g_zigma_date_show_bool
+      {
+        \tl_if_empty:NF \g_zigma_date_tl
+          {
+            \begin{center}
+              {\small\sffamily \tl_use:N \g_zigma_date_tl}
+            \end{center}
+            \vspace{0.5em}
+          }
+      }
+  }
+
+\cs_new_protected:Npn \zigma_rho_render_abstract:
+  {
+    % Render abstract in rho-style colored box
+    \tl_if_empty:NF \g_zigma_abstract_tl
+      {
+        \begin{tcolorbox}[
+          colback=rhocolor!22, 
+          colframe=rhocolor!22,
+          arc=0pt, 
+          boxrule=0pt, 
+          left=5pt, 
+          right=5pt, 
+          top=5pt, 
+          bottom=5pt
+        ]
+          {\zigma_rho_abstract_head_font: Abstract}
+          \vskip0.5em
+          {\zigma_rho_abstract_font: \g_zigma_abstract_tl}
+          
+          % Keywords if set
+          \tl_if_empty:NF \g_zigma_keywords_tl
+            {
+              \vskip10pt
+              {\zigma_rho_keywords_font: \textbf{Keywords:}~\tl_use:N \g_zigma_keywords_tl}
+            }
+        \end{tcolorbox}
+        \vspace{10pt}
+      }
+  }
+
+%% ========================================================================
+%% Rho-specific Metadata Section
+%% ========================================================================
+
+\cs_new_protected:Npn \zigma_rho_render_metadata:
+  {
+    % Render DOI, dates, license if set (rho style)
+    \bool_if:NT \g_zigma_corresponding_footer_bool
+      {
+        \int_zero:N \l__zigma_rho_meta_count_int
+        
+        % Check if we have any metadata to show
+        \tl_if_empty:NF \g_zigma_meta_doi_tl { \int_incr:N \l__zigma_rho_meta_count_int }
+        \tl_if_empty:NF \g_zigma_meta_url_tl { \int_incr:N \l__zigma_rho_meta_count_int }
+        \tl_if_empty:NF \g_zigma_meta_received_tl { \int_incr:N \l__zigma_rho_meta_count_int }
+        \tl_if_empty:NF \g_zigma_meta_revised_tl { \int_incr:N \l__zigma_rho_meta_count_int }
+        \tl_if_empty:NF \g_zigma_meta_accepted_tl { \int_incr:N \l__zigma_rho_meta_count_int }
+        \tl_if_empty:NF \g_zigma_meta_published_tl { \int_incr:N \l__zigma_rho_meta_count_int }
+        
+        % Also check for corresponding authors
+        \seq_map_inline:Nn \g_zigma_author_ids_seq
+          {
+            \tl_clear:N \l__zigma_rho_tmp_corr_tl
+            \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_##1 } { corresponding } \l__zigma_rho_tmp_corr_tl
+            \quark_if_no_value:NF \l__zigma_rho_tmp_corr_tl
+              {
+                \str_if_eq:VnT \l__zigma_rho_tmp_corr_tl { true }
+                  { \int_incr:N \l__zigma_rho_meta_count_int }
+              }
+          }
+        
+        \int_compare:nNnT { \l__zigma_rho_meta_count_int } > { 0 }
+          {
+            \RaggedRight
+            \vskip5pt
+            {\zigma_rho_info_font:
+            
+            % Corresponding authors
+            \seq_map_inline:Nn \g_zigma_author_ids_seq
+              {
+                \tl_clear:N \l__zigma_rho_tmp_corr_tl
+                \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_##1 } { corresponding } \l__zigma_rho_tmp_corr_tl
+                \quark_if_no_value:NF \l__zigma_rho_tmp_corr_tl
+                  {
+                    \str_if_eq:VnT \l__zigma_rho_tmp_corr_tl { true }
+                      {
+                        % Get email
+                        \tl_clear:N \l__zigma_rho_tmp_email_tl
+                        \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_##1 } { email } \l__zigma_rho_tmp_email_tl
+                        \quark_if_no_value:NF \l__zigma_rho_tmp_email_tl
+                          {
+                            \tl_if_empty:NF \l__zigma_rho_tmp_email_tl
+                              {
+                                {\color{rhocolor}\bfseries Corresponding~author:~}
+                                \href{mailto:\tl_use:N\l__zigma_rho_tmp_email_tl}{\tl_use:N\l__zigma_rho_tmp_email_tl}
+                                \par
+                              }
+                          }
+                      }
+                  }
+              }
+            
+            % DOI
+            \tl_if_empty:NF \g_zigma_meta_doi_tl
+              {
+                {\color{rhocolor}\bfseries DOI:~}
+                \href{https://doi.org/\g_zigma_meta_doi_tl}{\g_zigma_meta_doi_tl}\par
+              }
+            
+            % URL (if provided)
+            \tl_if_empty:NF \g_zigma_meta_url_tl
+              {
+                \tl_set:Nn \l_tmpa_tl {🔗}
+                \tl_if_empty:NF \g_zigma_meta_url_show_tl
+                  { \tl_set:NV \l_tmpa_tl \g_zigma_meta_url_show_tl }
+                {\color{rhocolor}\bfseries URL:~}
+                \href{\g_zigma_meta_url_tl}{\l_tmpa_tl~\g_zigma_meta_url_tl}\par
+              }
+            
+            % Dates on same line
+            \tl_if_empty:NF \g_zigma_meta_received_tl
+              {
+                {\color{rhocolor}\bfseries Received:~}\g_zigma_meta_received_tl\hspace{10pt}
+              }
+            \tl_if_empty:NF \g_zigma_meta_revised_tl
+              {
+                {\color{rhocolor}\bfseries Revised:~}\g_zigma_meta_revised_tl\hspace{10pt}
+              }
+            \tl_if_empty:NF \g_zigma_meta_accepted_tl
+              {
+                {\color{rhocolor}\bfseries Accepted:~}\g_zigma_meta_accepted_tl\hspace{10pt}
+              }
+            % Published on separate line if we had other dates
+            \tl_if_empty:NF \g_zigma_meta_published_tl
+              {
+                \tl_if_empty:NF \g_zigma_meta_received_tl { \par }
+                {\color{rhocolor}\bfseries Published:~}\g_zigma_meta_published_tl\par
+              }
+            
+            % License
+            \tl_if_empty:NF \g_zigma_meta_license_tl
+              {
+                \vskip3pt
+                \g_zigma_meta_license_tl\par
+              }
+            }
+            \vskip1pt
+            
+            % Rule spanning both columns
+            \rule{\textwidth}{0.3pt}
+            \vskip10pt
+          }
+      }
+  }
+
+\int_new:N \l__zigma_rho_meta_count_int
+\tl_new:N \l__zigma_rho_tmp_corr_tl
+\tl_new:N \l__zigma_rho_tmp_email_tl
+
+%% ========================================================================
+%% Hook into zigma's maketitle
+%% ========================================================================
+
+\cs_new_protected:Npn \zigma_rho_maketitle:
+  {
+    % Rho style works in twocolumn
+    \if@twocolumn
+      \twocolumn[
+        \zigma_rho_render_title:
+        \zigma_rho_render_authors:
+        \zigma_rho_render_date:
+        \zigma_rho_render_abstract:
+        \zigma_rho_render_metadata:
+      ]
+      % Apply first page style
+      \thispagestyle{firststyle}
+    \else
+      \zigma_rho_render_title:
+      \zigma_rho_render_authors:
+      \zigma_rho_render_date:
+      \zigma_rho_render_abstract:
+      \zigma_rho_render_metadata:
+    \fi
+  }
+
+% Register this rendering function
+\cs_gset_eq:NN \zigma_render_maketitle: \zigma_rho_maketitle:
+
+\zigma_log:n { [PLUGIN]~Rho~plugin~loaded~successfully }
+
+\ExplSyntaxOff
+
+\endinput

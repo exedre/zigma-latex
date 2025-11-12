@@ -1,0 +1,1805 @@
+%% Zigma LaTeX Class - User Manual
+%% Comprehensive documentation for v0.9.0
+\documentclass[11pt,twoside,openright]{book}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{multicol}
+
+% Colors
+\definecolor{zigmablue}{RGB}{0,128,128}
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{codeframe}{RGB}{200,200,200}
+
+% Hyperref setup
+\hypersetup{
+  colorlinks=true,
+  linkcolor=zigmablue,
+  urlcolor=zigmablue,
+  citecolor=zigmablue,
+  bookmarksnumbered=true,
+  pdftitle={Zigma LaTeX Class - User Manual v0.9.0},
+  pdfauthor={Emmanuele Somma},
+  pdfsubject={LaTeX Document Class},
+  pdfkeywords={LaTeX, expl3, document class, academic publishing}
+}
+
+% Listings setup for LaTeX code
+\lstdefinestyle{latexcode}{
+  language=[LaTeX]TeX,
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  framerule=0.5pt,
+  rulecolor=\color{codeframe},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=2,
+  showstringspaces=false,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{red},
+  xleftmargin=2em,
+  xrightmargin=1em,
+  aboveskip=1em,
+  belowskip=1em
+}
+
+\lstset{style=latexcode}
+
+% Custom commands
+\newcommand{\zigma}{\textbf{Zigma}}
+\newcommand{\cmd}[1]{\texttt{\textbackslash#1}}
+\newcommand{\pkg}[1]{\textsf{#1}}
+\newcommand{\opt}[1]{\texttt{#1}}
+\newcommand{\meta}[1]{$\langle$\textit{#1}$\rangle$}
+
+% Headers and footers
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[LO]{\nouppercase{\rightmark}}
+\fancyhead[RE]{\nouppercase{\leftmark}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Title formatting
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{zigmablue}}
+  {\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{zigmablue}}
+  {\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries}
+  {\thesubsection}{1em}{}
+
+% Colored boxes for examples and notes
+\tcbset{
+  examplebox/.style={
+    colback=zigmablue!5,
+    colframe=zigmablue,
+    title=Example,
+    fonttitle=\bfseries,
+    boxrule=0.5pt
+  },
+  notebox/.style={
+    colback=yellow!10,
+    colframe=orange,
+    title=Note,
+    fonttitle=\bfseries,
+    boxrule=0.5pt
+  },
+  warningbox/.style={
+    colback=red!5,
+    colframe=red,
+    title=Warning,
+    fonttitle=\bfseries,
+    boxrule=0.5pt
+  }
+}
+
+% Document metadata
+\title{%
+  {\Huge\textbf{\zigma{} LaTeX Class}}\\[0.5cm]
+  {\Large User Manual and Reference Guide}\\[0.3cm]
+  {\large Version 0.9.0}
+}
+\author{Emmanuele Somma\\[0.2cm]\texttt{emmanuele@exedre.org}}
+\date{November 7, 2025}
+
+\begin{document}
+
+%% ====================================================================
+%% TITLE PAGE
+%% ====================================================================
+
+\frontmatter
+
+\maketitle
+
+\clearpage
+
+%% ====================================================================
+%% COPYRIGHT AND LICENSE
+%% ====================================================================
+
+\thispagestyle{empty}
+\vspace*{\fill}
+\begin{center}
+\textbf{Zigma LaTeX Class v0.9.0}
+
+Copyright \textcopyright\ 2025 Emmanuele Somma
+
+\bigskip
+
+This work may be distributed and/or modified under the
+conditions of the LaTeX Project Public License, either version 1.3c
+of this license or (at your option) any later version.
+The latest version of this license is in:
+
+\url{http://www.latex-project.org/lppl.txt}
+
+and version 1.3c or later is part of all distributions of LaTeX
+version 2008 or later.
+
+\bigskip
+
+\textbf{Repository:} \url{https://git.xed.it/exedre/zigma-class}
+
+\bigskip
+
+This manual documents version 0.9.0 of the Zigma LaTeX class.
+\end{center}
+\vspace*{\fill}
+
+\clearpage
+
+%% ====================================================================
+%% TABLE OF CONTENTS
+%% ====================================================================
+
+\tableofcontents
+
+\clearpage
+
+%% ====================================================================
+%% PREFACE
+%% ====================================================================
+
+\chapter*{Preface}
+\addcontentsline{toc}{chapter}{Preface}
+
+\zigma{} is a modern, flexible LaTeX document class designed for academic journals and scientific publications. Built entirely with LaTeX3's \pkg{expl3} programming layer, it provides a robust foundation for professional document preparation with extensive customization capabilities.
+
+\section*{What Makes Zigma Special?}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Modern Implementation}: Pure \pkg{expl3} codebase ensures reliability and maintainability
+  \item \textbf{Modular Architecture}: Plugin system supports multiple base classes (article, memoir, KOMA-Script, rho)
+  \item \textbf{Smart Features}: Intelligent cross-referencing, automatic ORCID integration, flexible bibliography support
+  \item \textbf{User-Friendly}: Simple key-value configuration interface via \cmd{zigmasetup}
+  \item \textbf{Production-Ready}: Extensively tested with comprehensive documentation
+\end{itemize}
+
+\section*{Who Should Use Zigma?}
+
+This class is ideal for:
+
+\begin{itemize}[leftmargin=*]
+  \item Academic researchers writing journal articles
+  \item PhD students preparing dissertations
+  \item Conference organizers needing consistent formatting
+  \item Journal editors seeking a flexible submission system
+  \item Anyone requiring professional academic document preparation
+\end{itemize}
+
+\section*{Manual Structure}
+
+This manual is organized into the following parts:
+
+\begin{description}
+  \item[Part I: Getting Started] Installation, quick start guide, and basic usage
+  \item[Part II: Core Features] Author management, metadata, bibliography
+  \item[Part III: Advanced Features] Cross-referencing, templates, customization
+  \item[Part IV: Reference] Complete key reference, command reference
+  \item[Part V: Appendices] Examples, troubleshooting, development
+\end{description}
+
+\section*{Conventions Used in This Manual}
+
+\begin{itemize}[leftmargin=*]
+  \item \cmd{command} represents a LaTeX command
+  \item \opt{option} represents a class option or key
+  \item \meta{argument} represents a placeholder for user input
+  \item Code examples appear in \colorbox{codebg}{\texttt{monospaced gray boxes}}
+\end{itemize}
+
+\vfill
+
+\begin{center}
+\textit{Made with ❤️ and expl3 by humans and AI working together}
+\end{center}
+
+\mainmatter
+
+%% ====================================================================
+%% PART I: GETTING STARTED
+%% ====================================================================
+
+\part{Getting Started}
+
+\chapter{Introduction}
+
+\section{Overview}
+
+The \zigma{} LaTeX class provides a comprehensive framework for creating professional academic documents. Version 0.9.0 introduces advanced features including smart cross-referencing with automatic type detection and extensive bibliography support with 15 citation styles.
+
+\subsection{Key Features}
+
+\begin{description}
+  \item[Multi-Author Support] Robust system for managing multiple authors with affiliations, ORCID integration, and corresponding author markers
+  
+  \item[Base Class System] Modular plugins for different document types:
+  \begin{itemize}
+    \item \textbf{Article}: Standard LaTeX articles
+    \item \textbf{Memoir}: Books, theses, long documents
+    \item \textbf{KOMA-Script}: European typography (scrartcl, scrreprt, scrbook)
+    \item \textbf{Rho}: Academic journals with full metadata support
+  \end{itemize}
+  
+  \item[Smart Cross-References] Intelligent referencing with automatic type detection for 11 label types (sections, figures, tables, equations, etc.)
+  
+  \item[Bibliography Integration] 15 citation styles including IEEE, APA, Chicago, Nature, Harvard, Vancouver, MLA, and more
+  
+  \item[Template System] Pre-configured templates for common publication types (IEEE, APA, Nature, thesis)
+  
+  \item[Customization] Extensive configuration via key-value interface with support for headers, footers, colors, fonts, and layouts
+\end{description}
+
+\subsection{System Requirements}
+
+\begin{itemize}
+  \item \textbf{LaTeX Engine}: LuaLaTeX (recommended), XeLaTeX, or pdfLaTeX
+  \item \textbf{TeX Distribution}: TeX Live 2022 or later, MiKTeX 2022 or later
+  \item \textbf{Required Packages}: expl3, xparse, hyperref, xcolor
+  \item \textbf{Optional Packages}: biblatex (for bibliography), academicons (for ORCID icons)
+\end{itemize}
+
+\section{Installation}
+
+\subsection{Quick Installation}
+
+The simplest way to use \zigma{} is to clone the repository and reference it directly:
+
+\begin{lstlisting}
+git clone https://git.xed.it/exedre/zigma-class.git
+cd zigma-class
+\end{lstlisting}
+
+Then in your document:
+
+\begin{lstlisting}
+\documentclass{zigma-class/zigma}
+\end{lstlisting}
+
+\subsection{Manual Installation}
+
+For system-wide installation:
+
+\begin{enumerate}
+  \item Download the latest release from the repository
+  \item Copy \texttt{zigma-class/} directory to your local texmf tree:
+  \begin{itemize}
+    \item Linux/Mac: \texttt{\textasciitilde/texmf/tex/latex/}
+    \item Windows: \texttt{C:\textbackslash Users\textbackslash\meta{username}\textbackslash texmf\textbackslash tex\textbackslash latex\textbackslash}
+  \end{itemize}
+  \item Run \texttt{texhash} or \texttt{mktexlsr} to update the filename database
+\end{enumerate}
+
+\subsection{Verifying Installation}
+
+Create a minimal test file:
+
+\begin{lstlisting}
+\documentclass{zigma-class/zigma}
+\zigmasetup{title = {Test Document}}
+\begin{document}
+\maketitle
+Hello, Zigma!
+\end{document}
+\end{lstlisting}
+
+Compile with:
+
+\begin{lstlisting}[language=bash]
+lualatex test.tex
+\end{lstlisting}
+
+If compilation succeeds, \zigma{} is correctly installed.
+
+\chapter{Quick Start Guide}
+
+\section{Your First Document}
+
+Let's create a simple academic article:
+
+\begin{lstlisting}
+\documentclass{zigma-class/zigma}
+
+\zigmasetup{
+  title = {Introduction to Quantum Computing},
+  subtitle = {A Beginner's Guide},
+  
+  affiliations.0 = {MIT - Department of Computer Science},
+  
+  authors.0.name = {Alice Johnson},
+  authors.0.email = {alice@mit.edu},
+  authors.0.orcid = {0000-0001-2345-6789},
+  authors.0.affiliation = {0},
+  authors.0.corresponding = {true},
+  
+  abstract = {This paper provides an accessible introduction 
+              to quantum computing for beginners...},
+  keywords = {quantum computing, qubits, algorithms},
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+Quantum computing represents a paradigm shift...
+
+\section{Quantum Bits}
+\label{sec:qubits}
+
+As discussed in \zigmaref{sec:intro}, quantum bits differ...
+
+\end{document}
+\end{lstlisting}
+
+\section{Compilation}
+
+Compile your document with LuaLaTeX:
+
+\begin{lstlisting}[language=bash]
+lualatex mydocument.tex
+\end{lstlisting}
+
+For documents with cross-references, compile twice:
+
+\begin{lstlisting}[language=bash]
+lualatex mydocument.tex
+lualatex mydocument.tex
+\end{lstlisting}
+
+For documents with bibliography, use:
+
+\begin{lstlisting}[language=bash]
+lualatex mydocument.tex
+biber mydocument
+lualatex mydocument.tex
+lualatex mydocument.tex
+\end{lstlisting}
+
+Or simply use \texttt{latexmk}:
+
+\begin{lstlisting}[language=bash]
+latexmk -lualatex -interaction=nonstopmode mydocument.tex
+\end{lstlisting}
+
+\section{Understanding the Output}
+
+Your compiled PDF will include:
+
+\begin{itemize}
+  \item Title (full-width in two-column mode)
+  \item Subtitle (if specified)
+  \item Author name with ORCID icon (clickable)
+  \item Author email (clickable mailto: link)
+  \item Affiliation with superscript marker
+  \item Abstract (full-width, bold label)
+  \item Keywords (formatted inline list)
+  \item Corresponding author footer (automatic)
+  \item Your document content
+\end{itemize}
+
+%% ====================================================================
+%% PART II: CORE FEATURES
+%% ====================================================================
+
+\part{Core Features}
+
+\chapter{Document Configuration}
+
+\section{The \texttt{\textbackslash zigmasetup} Command}
+
+All document configuration in \zigma{} is done via the \cmd{zigmasetup} command with key-value pairs:
+
+\begin{lstlisting}
+\zigmasetup{
+  key1 = {value1},
+  key2 = {value2},
+  nested.key = {value},
+}
+\end{lstlisting}
+
+\subsection{Configuration Timing}
+
+\begin{tcolorbox}[notebox]
+\cmd{zigmasetup} can be called multiple times and in different locations:
+\begin{itemize}
+  \item In the preamble (before \cmd{begin\{document\}})
+  \item After \cmd{begin\{document\}}
+  \item Multiple times to override previous settings
+\end{itemize}
+\end{tcolorbox}
+
+\section{Basic Metadata}
+
+\subsection{Title and Subtitle}
+
+\begin{lstlisting}
+\zigmasetup{
+  title = {The Main Title of Your Document},
+  subtitle = {An Optional Subtitle},
+}
+\end{lstlisting}
+
+\subsection{Date}
+
+\begin{lstlisting}
+\zigmasetup{
+  date = {\today},         % Default: today's date
+  date.show = {true},      % Show/hide date (default: true)
+}
+\end{lstlisting}
+
+\subsection{Abstract and Keywords}
+
+\begin{lstlisting}
+\zigmasetup{
+  abstract = {This paper investigates...},
+  keywords = {keyword1, keyword2, keyword3},
+}
+\end{lstlisting}
+
+\section{Clickable Titles and URLs}
+
+Make your title a clickable hyperlink:
+
+\begin{lstlisting}
+\zigmasetup{
+  title = {My Research Paper},
+  title.url = {https://doi.org/10.1234/paper},
+  title.url.show = {true},  % Optional: show URL in footer
+}
+\end{lstlisting}
+
+\chapter{Author Management}
+
+\section{Single Author}
+
+For a document with one author:
+
+\begin{lstlisting}
+\zigmasetup{
+  affiliations.0 = {University of Example},
+  
+  authors.0.name = {John Doe},
+  authors.0.email = {john.doe@example.edu},
+  authors.0.orcid = {0000-0001-2345-6789},
+  authors.0.affiliation = {0},
+  authors.0.corresponding = {true},
+}
+\end{lstlisting}
+
+\section{Multiple Authors}
+
+For documents with multiple authors:
+
+\begin{lstlisting}
+\zigmasetup{
+  % Define affiliations first
+  affiliations.0 = {MIT},
+  affiliations.1 = {Stanford University},
+  affiliations.2 = {CERN},
+  
+  % First author
+  authors.0.name = {Alice Smith},
+  authors.0.email = {alice@mit.edu},
+  authors.0.orcid = {0000-0001-1111-1111},
+  authors.0.affiliation = {0,2},  % Multiple affiliations
+  authors.0.corresponding = {true},
+  
+  % Second author
+  authors.1.name = {Bob Jones},
+  authors.1.affiliation = {1},
+  
+  % Third author
+  authors.2.name = {Carol White},
+  authors.2.email = {carol@cern.ch},
+  authors.2.affiliation = {2},
+}
+\end{lstlisting}
+
+\section{Author Properties}
+
+\begin{description}
+  \item[\opt{authors.N.name}] (Required) Author's full name
+  \item[\opt{authors.N.email}] Email address (creates clickable link)
+  \item[\opt{authors.N.orcid}] ORCID identifier (displays icon with link)
+  \item[\opt{authors.N.affiliation}] Comma-separated affiliation IDs
+  \item[\opt{authors.N.corresponding}] \opt{true} or \opt{false} (default: false)
+\end{description}
+
+\subsection{ORCID Integration}
+
+When an ORCID is provided, \zigma{} automatically:
+
+\begin{itemize}
+  \item Displays the ORCID icon (from \pkg{academicons} package)
+  \item Makes it clickable to \texttt{https://orcid.org/}\meta{id}
+  \item Positions it as superscript after the author name
+\end{itemize}
+
+\subsection{Corresponding Author Markers}
+
+Corresponding authors are indicated with configurable symbols:
+
+\begin{lstlisting}
+\zigmasetup{
+  corresponding.marker = {envelope},  % envelope, star, or asterisk
+  corresponding.show-footer = {true}, % Show email footer
+  
+  authors.0.corresponding = {true},
+}
+\end{lstlisting}
+
+Available marker symbols:
+\begin{itemize}
+  \item \opt{envelope}: ✉ (default, from \pkg{marvosym} package)
+  \item \opt{star}: ★ (mathematical star)
+  \item \opt{asterisk}: * (simple asterisk)
+\end{itemize}
+
+The footer automatically lists all corresponding authors' emails:
+
+\begin{quote}
+✉ Corresponding author: alice@mit.edu
+\end{quote}
+
+Or for multiple corresponding authors:
+
+\begin{quote}
+✉ Corresponding authors: alice@mit.edu, bob@stanford.edu
+\end{quote}
+
+\chapter{Metadata and DOI}
+
+\section{Publication Metadata}
+
+Add metadata footer with DOI, dates, and license:
+
+\begin{lstlisting}
+\zigmasetup{
+  metadata.doi = {10.1234/journal.2024.001},
+  metadata.url = {https://example.org/paper},
+  metadata.url.show = {true},
+  
+  metadata.received = {2024-01-15},
+  metadata.revised = {2024-03-10},
+  metadata.accepted = {2024-05-20},
+  metadata.published = {2024-06-01},
+  
+  metadata.license = {CC BY 4.0},
+}
+\end{lstlisting}
+
+This generates a professional metadata footer:
+
+\begin{quote}
+\rule{\textwidth}{0.4pt}
+
+\textbf{DOI:} \textcolor{blue}{10.1234/journal.2024.001} $\vert$ 
+Received: 2024-01-15 $\vert$ 
+Accepted: 2024-05-20
+
+Published: 2024-06-01
+
+\textbf{License:} CC BY 4.0
+
+\rule{\textwidth}{0.4pt}
+\end{quote}
+
+\section{Journal Information}
+
+For journal publications:
+
+\begin{lstlisting}
+\zigmasetup{
+  journal.name = {Nature Physics},
+  journal.url = {https://nature.com/nphys},
+  journal.url.show = {true},
+}
+\end{lstlisting}
+
+\chapter{Bibliography}
+
+\section{Basic Bibliography Setup}
+
+Enable bibliography support with class options:
+
+\begin{lstlisting}
+\documentclass[bib,bibfile=references.bib]{zigma-class/zigma}
+
+\zigmasetup{
+  bib.style = {ieee},  % or apa, chicago, nature, etc.
+}
+\end{lstlisting}
+
+\section{Citation Styles}
+
+\zigma{} supports 15 citation styles:
+
+\begin{multicols}{2}
+\begin{enumerate}
+  \item ieee
+  \item apa
+  \item chicago
+  \item nature
+  \item numeric
+  \item authoryear
+  \item harvard
+  \item vancouver
+  \item mla
+  \item alphabetic
+  \item verbose
+  \item trad-abbrv
+  \item acm
+  \item authoryear-comp
+  \item philosophy
+\end{enumerate}
+\end{multicols}
+
+\subsection{Quick Style Selection}
+
+\begin{lstlisting}
+% Option 1: Class option
+\documentclass[bibpreset=harvard]{zigma-class/zigma}
+
+% Option 2: zigmasetup
+\zigmasetup{bib.style = {harvard}}
+\end{lstlisting}
+
+\section{Citation Commands}
+
+\begin{description}
+  \item[\cmd{cite\{\meta{key}\}}] Standard citation
+  \item[\cmd{textcite\{\meta{key}\}}] In-text citation (author-year styles)
+  \item[\cmd{parencite\{\meta{key}\}}] Parenthetical citation
+  \item[\cmd{footcite\{\meta{key}\}}] Footnote citation (verbose styles)
+\end{description}
+
+\section{Multiple Bibliography Files}
+
+Support for multiple .bib files:
+
+\begin{lstlisting}
+\documentclass[bibfile={refs1.bib,refs2.bib,refs3.bib}]{zigma-class/zigma}
+\end{lstlisting}
+
+\section{Advanced Features}
+
+\subsection{Per-Chapter Bibliographies}
+
+For books and theses:
+
+\begin{lstlisting}
+\begin{refsection}
+  \chapter{Introduction}
+  Content with \cite{ref1}...
+  \printbibliography[heading=subbibliography]
+\end{refsection}
+
+\begin{refsection}
+  \chapter{Methods}
+  Content with \cite{ref2}...
+  \printbibliography[heading=subbibliography]
+\end{refsection}
+\end{lstlisting}
+
+\subsection{Split Bibliographies}
+
+Separate primary and secondary sources:
+
+\begin{lstlisting}
+% In .bib file, add keywords:
+@article{source1,
+  author = {...},
+  keywords = {primary},
+}
+
+% In document:
+\printbibliography[keyword=primary,title={Primary Sources}]
+\printbibliography[keyword=secondary,title={Secondary Literature}]
+\end{lstlisting}
+
+%% ====================================================================
+%% PART III: ADVANCED FEATURES
+%% ====================================================================
+
+\part{Advanced Features}
+
+\chapter{Smart Cross-References}
+
+\section{Introduction}
+
+Version 0.9.0 introduces intelligent cross-referencing with automatic type detection. No need to remember if you're referencing a section, figure, or table---\zigma{} detects it from the label prefix.
+
+\section{Basic Usage}
+
+\subsection{Standard References}
+
+\begin{lstlisting}
+\section{Introduction}
+\label{sec:intro}
+
+\begin{figure}
+  \caption{Results}
+  \label{fig:results}
+\end{figure}
+
+\begin{table}
+  \caption{Data}
+  \label{tab:data}
+\end{table}
+
+% Smart references (auto-detect type)
+See \zigmaref{sec:intro} for background.
+The \zigmaref{fig:results} shows the findings.
+Values in \zigmaref{tab:data} confirm this.
+\end{lstlisting}
+
+Output:
+\begin{quote}
+See Section 1 for background.\\
+The Figure 1 shows the findings.\\
+Values in Table 1 confirm this.
+\end{quote}
+
+\subsection{Multiple References}
+
+\begin{lstlisting}
+% Oxford comma formatting
+See \zigmarefs{sec:intro,sec:methods,sec:results}.
+Figures \zigmarefs{fig:a,fig:b,fig:c} illustrate this.
+\end{lstlisting}
+
+Output:
+\begin{quote}
+See Sections 1, 2, and 3.\\
+Figures 1, 2, and 3 illustrate this.
+\end{quote}
+
+\section{Reference Commands}
+
+\begin{description}
+  \item[\cmd{zigmaref\{\meta{label}\}}] Smart reference with prefix\\
+    Example: \texttt{\cmd{zigmaref\{sec:intro\}}} → "Section 1"
+  
+  \item[\cmd{Zigmaref\{\meta{label}\}}] Uppercase variant\\
+    Example: \texttt{\cmd{Zigmaref\{fig:plot\}}} → "FIGURE 2"
+  
+  \item[\cmd{zigmaref*\{\meta{label}\}}] Number only (no prefix)\\
+    Example: \texttt{\cmd{zigmaref*\{sec:intro\}}} → "1"
+  
+  \item[\cmd{zigmarefs\{\meta{lab1,lab2,...}\}}] Multiple references\\
+    Example: \texttt{\cmd{zigmarefs\{sec:a,sec:b\}}} → "Sections 1 and 2"
+  
+  \item[\cmd{zigmapageref\{\meta{label}\}}] Page reference\\
+    Example: \texttt{\cmd{zigmapageref\{sec:intro\}}} → "on page 5"
+  
+  \item[\cmd{zigmafullref\{\meta{label}\}}] Full reference\\
+    Example: \texttt{\cmd{zigmafullref\{fig:plot\}}} → "Figure 2 on page 12"
+\end{description}
+
+\section{Supported Label Types}
+
+\zigma{} auto-detects 11 label types:
+
+\begin{center}
+\begin{tabular}{ll}
+\textbf{Prefix} & \textbf{Type} \\
+\hline
+\texttt{sec:} & Section \\
+\texttt{ch:} & Chapter \\
+\texttt{fig:} & Figure \\
+\texttt{tab:} & Table \\
+\texttt{eq:} & Equation \\
+\texttt{lst:} & Listing \\
+\texttt{alg:} & Algorithm \\
+\texttt{thm:} & Theorem \\
+\texttt{lem:} & Lemma \\
+\texttt{def:} & Definition \\
+\texttt{app:} & Appendix \\
+\end{tabular}
+\end{center}
+
+\section{Multilingual Support}
+
+Customize labels for any language:
+
+\begin{lstlisting}
+% Italian
+\zigmasetup{
+  labels.section = {Sezione},
+  labels.sections = {Sezioni},
+  labels.figure = {Figura},
+  labels.figures = {Figure},
+  labels.table = {Tabella},
+  labels.tables = {Tabelle},
+}
+\end{lstlisting}
+
+Now \texttt{\cmd{zigmaref\{sec:intro\}}} outputs "Sezione 1" instead of "Section 1".
+
+\subsection{Available Label Keys}
+
+All labels come in singular and plural forms:
+
+\begin{multicols}{2}
+\begin{itemize}[noitemsep]
+  \item \opt{labels.section / sections}
+  \item \opt{labels.chapter / chapters}
+  \item \opt{labels.figure / figures}
+  \item \opt{labels.table / tables}
+  \item \opt{labels.equation / equations}
+  \item \opt{labels.listing / listings}
+  \item \opt{labels.algorithm / algorithms}
+  \item \opt{labels.theorem / theorems}
+  \item \opt{labels.lemma / lemmas}
+  \item \opt{labels.definition / definitions}
+  \item \opt{labels.appendix / appendices}
+  \item \opt{labels.page / pages}
+\end{itemize}
+\end{multicols}
+
+\chapter{Base Class System}
+
+\section{Overview}
+
+\zigma{}'s base class system allows you to choose the underlying LaTeX class while maintaining consistent features. Four base classes are available:
+
+\begin{enumerate}
+  \item \textbf{Article}: Standard LaTeX article class (default for most)
+  \item \textbf{Memoir}: For books, theses, and long documents
+  \item \textbf{KOMA-Script}: European typography standards (scrartcl, scrreprt, scrbook)
+  \item \textbf{Rho}: Academic journal style with full metadata support (default)
+\end{enumerate}
+
+\section{Selecting a Base Class}
+
+\begin{lstlisting}
+% Use article base class
+\documentclass[base=article]{zigma-class/zigma}
+
+% Use memoir for a thesis
+\documentclass[base=memoir]{zigma-class/zigma}
+
+% Use KOMA-Script for European style
+\documentclass[base=scrartcl]{zigma-class/zigma}
+
+% Use rho for journal articles (default)
+\documentclass{zigma-class/zigma}  % or base=rho
+\end{lstlisting}
+
+\section{Base Class Comparison}
+
+\begin{center}
+\begin{tabular}{p{2.5cm}p{2.5cm}p{2.5cm}p{2.5cm}}
+\textbf{Feature} & \textbf{Article} & \textbf{Memoir} & \textbf{KOMA} \\
+\hline
+Two-column & Yes & No & Yes \\
+Chapters & No & Yes & Yes* \\
+Typography & American & Book & European \\
+Font style & Serif & Serif & Sans (titles) \\
+Use case & Papers & Theses & Papers \\
+Margins & Standard & Book & Configurable \\
+\multicolumn{4}{l}{*scrreprt and scrbook only}
+\end{tabular}
+\end{center}
+
+\section{Base Class Features}
+
+\subsection{Article Base Class}
+
+\begin{itemize}
+  \item Standard LaTeX article class
+  \item Two-column support
+  \item Compact layout
+  \item Full-width title, abstract, keywords
+  \item Best for: Journal papers, conference proceedings
+\end{itemize}
+
+\subsection{Memoir Base Class}
+
+\begin{itemize}
+  \item Memoir class for long documents
+  \item Single column default
+  \item Chapter support
+  \item Larger fonts and spacing
+  \item Book-style typography
+  \item Best for: PhD theses, technical books, monographs
+\end{itemize}
+
+\subsection{KOMA-Script Base Classes}
+
+\begin{itemize}
+  \item Three classes: scrartcl, scrreprt, scrbook
+  \item European typography standards
+  \item Sans-serif titles
+  \item Small fonts for abstract/keywords
+  \item Highly configurable via \cmd{KOMAoptions}
+  \item Best for: European academic publications
+\end{itemize}
+
+\subsection{Rho Base Class}
+
+\begin{itemize}
+  \item Academic journal style
+  \item Full metadata support (DOI, dates, license)
+  \item Customizable headers and footers
+  \item Two-column layout
+  \item Professional journal appearance
+  \item Best for: Journal submissions, online publications
+\end{itemize}
+
+\chapter{Templates}
+
+\section{Template System}
+
+Templates provide pre-configured settings for common publication types. They set base class, colors, fonts, bibliography style, and layout automatically.
+
+\section{Available Templates}
+
+\subsection{IEEE Template}
+
+\begin{lstlisting}
+\documentclass[template=ieee,bibfile=refs.bib]{zigma-class/zigma}
+\end{lstlisting}
+
+Features:
+\begin{itemize}
+  \item Two-column article format
+  \item IEEE bibliography style
+  \item 0.75-inch margins
+  \item Standard IEEE conference paper appearance
+\end{itemize}
+
+\subsection{APA Template}
+
+\begin{lstlisting}
+\documentclass[template=apa,bibfile=refs.bib]{zigma-class/zigma}
+\end{lstlisting}
+
+Features:
+\begin{itemize}
+  \item APA 6th edition style
+  \item Author-year citations
+  \item Standard margins
+  \item Psychology/social sciences formatting
+\end{itemize}
+
+\subsection{Nature Template}
+
+\begin{lstlisting}
+\documentclass[template=nature,bibfile=refs.bib]{zigma-class/zigma}
+\end{lstlisting}
+
+Features:
+\begin{itemize}
+  \item Nature journal style
+  \item Numeric citations
+  \item Compact formatting
+  \item Science publication standards
+\end{itemize}
+
+\subsection{Thesis Template}
+
+\begin{lstlisting}
+\documentclass[template=thesis]{zigma-class/zigma}
+\end{lstlisting}
+
+Features:
+\begin{itemize}
+  \item Memoir base class
+  \item Chapter support
+  \item Larger fonts (12pt)
+  \item Book-style layout
+  \item Per-chapter bibliographies
+\end{itemize}
+
+\subsection{Il Cibernetico Template}
+
+\begin{lstlisting}
+\documentclass[template=ilcibernetico,bibfile=refs.bib]{zigma-class/zigma}
+\end{lstlisting}
+
+Features:
+\begin{itemize}
+  \item Green color scheme (\#009966)
+  \item Rho base class
+  \item IEEE bibliography
+  \item Custom headers with lead author
+  \item Journal-specific formatting
+\end{itemize}
+
+\section{Overriding Templates}
+
+You can override template settings:
+
+\begin{lstlisting}
+\documentclass[template=ieee]{zigma-class/zigma}
+
+\zigmasetup{
+  % Override template defaults
+  bib.style = {apa},          % Change from IEEE to APA
+  color.main = {0000ff},      % Change color scheme
+}
+\end{lstlisting}
+
+\begin{tcolorbox}[warningbox]
+Template overrides generate warnings to alert you of conflicts. User settings always take precedence.
+\end{tcolorbox}
+
+\chapter{Customization}
+
+\section{Colors}
+
+\subsection{Main Color Scheme}
+
+\begin{lstlisting}
+\zigmasetup{
+  color.main = {008080},     % Teal (default)
+}
+\end{lstlisting}
+
+For rho base class:
+
+\begin{lstlisting}
+\zigmasetup{
+  rhocolor = {009966},       % Green for rho
+}
+\end{lstlisting}
+
+\section{Headers and Footers}
+
+\subsection{Custom Headers}
+
+\begin{lstlisting}
+\zigmasetup{
+  header.left = {My Custom Header},
+  header.center = {\thepage},
+  header.right = {Right Header},
+}
+\end{lstlisting}
+
+\subsection{Custom Footers}
+
+\begin{lstlisting}
+\zigmasetup{
+  footer.left = {Footer Left},
+  footer.center = {Footer Center},
+  footer.right = {Footer Right},
+}
+\end{lstlisting}
+
+\begin{tcolorbox}[notebox]
+Header/footer customization is fully supported in the rho base class. Other base classes use their native header/footer systems.
+\end{tcolorbox}
+
+\section{Layout Options}
+
+Layout must be configured via class options (not \cmd{zigmasetup}):
+
+\begin{lstlisting}
+\documentclass[
+  base=rho,
+  marginleft=3cm,
+  marginright=3cm,
+  margintop=2.5cm,
+  marginbottom=2.5cm,
+  columnsep=25pt
+]{zigma-class/zigma}
+\end{lstlisting}
+
+Available layout options:
+\begin{itemize}
+  \item \opt{marginleft} (default: 1.25cm for rho)
+  \item \opt{marginright} (default: 1.25cm for rho)
+  \item \opt{margintop} (default: 2cm for rho)
+  \item \opt{marginbottom} (default: 2cm for rho)
+  \item \opt{columnsep} (default: 15pt for rho)
+\end{itemize}
+
+\section{Page Numbering}
+
+\begin{lstlisting}
+\zigmasetup{
+  page.start = {101},        % Start at page 101
+}
+\end{lstlisting}
+
+Useful for journal articles in compiled volumes.
+
+%% ====================================================================
+%% PART IV: REFERENCE
+%% ====================================================================
+
+\part{Reference}
+
+\chapter{Complete Key Reference}
+
+\section{Document Metadata}
+
+\begin{description}
+  \item[\opt{title}] Document title (required)
+  \item[\opt{subtitle}] Optional subtitle
+  \item[\opt{date}] Publication date (default: \cmd{today})
+  \item[\opt{date.show}] Boolean: show/hide date (default: true)
+  \item[\opt{abstract}] Abstract text
+  \item[\opt{keywords}] Comma-separated keywords
+\end{description}
+
+\section{Title URLs}
+
+\begin{description}
+  \item[\opt{title.url}] URL for clickable title
+  \item[\opt{title.url.show}] Boolean: show URL (default: false)
+\end{description}
+
+\section{Journal Information}
+
+\begin{description}
+  \item[\opt{journal.name}] Journal name
+  \item[\opt{journal.url}] Journal website URL
+  \item[\opt{journal.url.show}] Boolean: show URL (default: false)
+\end{description}
+
+\section{Authors and Affiliations}
+
+\begin{description}
+  \item[\opt{affiliations.N}] Affiliation N (N = 0, 1, 2, ...)
+  \item[\opt{authors.N.name}] Author N name (required)
+  \item[\opt{authors.N.email}] Author N email
+  \item[\opt{authors.N.orcid}] Author N ORCID identifier
+  \item[\opt{authors.N.affiliation}] Comma-separated affiliation IDs
+  \item[\opt{authors.N.corresponding}] Boolean: corresponding author
+\end{description}
+
+\section{Corresponding Author Settings}
+
+\begin{description}
+  \item[\opt{corresponding.marker}] Symbol: envelope, star, asterisk (default: envelope)
+  \item[\opt{corresponding.show-footer}] Boolean: show footer (default: true)
+\end{description}
+
+\section{Metadata Footer}
+
+\begin{description}
+  \item[\opt{metadata.doi}] DOI identifier
+  \item[\opt{metadata.url}] Custom URL
+  \item[\opt{metadata.url.show}] Boolean: show URL (default: false)
+  \item[\opt{metadata.received}] Received date (YYYY-MM-DD)
+  \item[\opt{metadata.revised}] Revised date
+  \item[\opt{metadata.accepted}] Accepted date
+  \item[\opt{metadata.published}] Published date
+  \item[\opt{metadata.license}] License text (e.g., "CC BY 4.0")
+\end{description}
+
+\section{Bibliography Settings}
+
+\begin{description}
+  \item[\opt{bib.style}] Citation style: ieee, apa, chicago, nature, harvard, vancouver, mla, alphabetic, verbose, etc. (15 total)
+  \item[\opt{bib.backend}] Backend: biblatex or natbib (default: biblatex)
+  \item[\opt{bib.sorting}] Boolean: enable sorting (default: true)
+\end{description}
+
+\section{Cross-Reference Labels}
+
+All labels support singular and plural forms:
+
+\begin{description}
+  \item[\opt{labels.section / sections}] Section labels
+  \item[\opt{labels.chapter / chapters}] Chapter labels
+  \item[\opt{labels.figure / figures}] Figure labels
+  \item[\opt{labels.table / tables}] Table labels
+  \item[\opt{labels.equation / equations}] Equation labels
+  \item[\opt{labels.listing / listings}] Listing labels
+  \item[\opt{labels.algorithm / algorithms}] Algorithm labels
+  \item[\opt{labels.theorem / theorems}] Theorem labels
+  \item[\opt{labels.lemma / lemmas}] Lemma labels
+  \item[\opt{labels.definition / definitions}] Definition labels
+  \item[\opt{labels.appendix / appendices}] Appendix labels
+  \item[\opt{labels.page / pages}] Page labels
+\end{description}
+
+\section{Header and Footer}
+
+\begin{description}
+  \item[\opt{header.left}] Left header content
+  \item[\opt{header.center}] Center header content
+  \item[\opt{header.right}] Right header content
+  \item[\opt{footer.left}] Left footer content
+  \item[\opt{footer.center}] Center footer content
+  \item[\opt{footer.right}] Right footer content
+\end{description}
+
+\section{Colors}
+
+\begin{description}
+  \item[\opt{color.main}] Main color (hex, e.g., 008080)
+  \item[\opt{rhocolor}] Rho base class color (hex)
+\end{description}
+
+\section{Page Settings}
+
+\begin{description}
+  \item[\opt{page.start}] Starting page number (integer)
+\end{description}
+
+\section{Debug Mode}
+
+\begin{description}
+  \item[\opt{debug}] Boolean: enable debug output (default: false)
+\end{description}
+
+\chapter{Command Reference}
+
+\section{Setup Commands}
+
+\begin{description}
+  \item[\cmd{zigmasetup\{\meta{keys}\}}] Configure document settings
+  \item[\cmd{maketitle}] Generate title, authors, abstract, keywords
+\end{description}
+
+\section{Cross-Reference Commands}
+
+\begin{description}
+  \item[\cmd{zigmaref\{\meta{label}\}}] Smart reference with auto-prefix
+  \item[\cmd{Zigmaref\{\meta{label}\}}] Uppercase variant
+  \item[\cmd{zigmaref*\{\meta{label}\}}] Number only (no prefix)
+  \item[\cmd{zigmarefs\{\meta{labels}\}}] Multiple references
+  \item[\cmd{zigmapageref\{\meta{label}\}}] Page reference
+  \item[\cmd{zigmafullref\{\meta{label}\}}] Full reference (number + page)
+\end{description}
+
+\section{Citation Commands}
+
+Standard biblatex/natbib commands work transparently:
+
+\begin{description}
+  \item[\cmd{cite\{\meta{key}\}}] Basic citation
+  \item[\cmd{textcite\{\meta{key}\}}] In-text citation (biblatex)
+  \item[\cmd{parencite\{\meta{key}\}}] Parenthetical citation (biblatex)
+  \item[\cmd{footcite\{\meta{key}\}}] Footnote citation (biblatex)
+  \item[\cmd{citep\{\meta{key}\}}] Parenthetical (natbib)
+  \item[\cmd{citet\{\meta{key}\}}] Textual (natbib)
+\end{description}
+
+\section{Bibliography Printing}
+
+\begin{description}
+  \item[\cmd{printbibliography}] Print complete bibliography
+  \item[\cmd{printbibliography[keyword=\meta{kw}]}] Filter by keyword
+  \item[\cmd{printbibliography[title=\meta{title}]}] Custom heading
+\end{description}
+
+\chapter{Class Options Reference}
+
+\section{Base Class Selection}
+
+\begin{description}
+  \item[\opt{base=\meta{name}}] Select base class: article, memoir, scrartcl, scrreprt, scrbook, rho (default: rho)
+\end{description}
+
+\section{Bibliography Options}
+
+\begin{description}
+  \item[\opt{bib}] Enable bibliography support
+  \item[\opt{bibfile=\{\meta{file(s)}\}}] Specify .bib file(s) (comma-separated)
+  \item[\opt{bibpreset=\meta{style}}] Citation style preset
+  \item[\opt{bibbackend=\meta{backend}}] biblatex or natbib
+\end{description}
+
+\section{Template Options}
+
+\begin{description}
+  \item[\opt{template=\meta{name}}] Load template: ieee, apa, nature, thesis, ilcibernetico
+\end{description}
+
+\section{Layout Options}
+
+\begin{description}
+  \item[\opt{marginleft=\meta{dim}}] Left margin (e.g., 3cm)
+  \item[\opt{marginright=\meta{dim}}] Right margin
+  \item[\opt{margintop=\meta{dim}}] Top margin
+  \item[\opt{marginbottom=\meta{dim}}] Bottom margin
+  \item[\opt{columnsep=\meta{dim}}] Column separation (e.g., 25pt)
+\end{description}
+
+\begin{tcolorbox}[notebox]
+Layout options must be specified as class options, not in \cmd{zigmasetup}, because geometry package requires early configuration.
+\end{tcolorbox}
+
+%% ====================================================================
+%% PART V: APPENDICES
+%% ====================================================================
+
+\part{Appendices}
+
+\appendix
+
+\chapter{Complete Examples}
+
+\section{Minimal Article}
+
+\begin{lstlisting}
+\documentclass{zigma-class/zigma}
+
+\zigmasetup{
+  title = {A Short Note on Quantum Computing},
+  
+  affiliations.0 = {MIT},
+  
+  authors.0.name = {Alice Johnson},
+  authors.0.email = {alice@mit.edu},
+  authors.0.affiliation = {0},
+}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+Your content here.
+
+\end{document}
+\end{lstlisting}
+
+\section{Multi-Author Paper with Bibliography}
+
+\begin{lstlisting}
+\documentclass[bib,bibfile=refs.bib]{zigma-class/zigma}
+
+\zigmasetup{
+  title = {Machine Learning in Genomics},
+  subtitle = {A Survey},
+  abstract = {This paper surveys recent advances...},
+  keywords = {machine learning, genomics, bioinformatics},
+  
+  affiliations.0 = {Stanford University},
+  affiliations.1 = {Harvard Medical School},
+  
+  authors.0.name = {John Smith},
+  authors.0.email = {john@stanford.edu},
+  authors.0.orcid = {0000-0001-1111-1111},
+  authors.0.affiliation = {0},
+  authors.0.corresponding = {true},
+  
+  authors.1.name = {Jane Doe},
+  authors.1.affiliation = {1},
+  
+  bib.style = {nature},
+  
+  metadata.doi = {10.1234/journal.2024.001},
+  metadata.received = {2024-01-15},
+  metadata.accepted = {2024-05-20},
+}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+Recent advances in machine learning \cite{smith2023} have...
+
+\section{Methods}
+\label{sec:methods}
+
+As discussed in \zigmaref{sec:intro}, we apply...
+
+\printbibliography
+
+\end{document}
+\end{lstlisting}
+
+\section{PhD Thesis}
+
+\begin{lstlisting}
+\documentclass[base=memoir,template=thesis]{zigma-class/zigma}
+
+\zigmasetup{
+  title = {Advanced Topics in Quantum Field Theory},
+  subtitle = {A Dissertation},
+  
+  affiliations.0 = {Department of Physics, MIT},
+  
+  authors.0.name = {Robert Brown},
+  authors.0.affiliation = {0},
+}
+
+\begin{document}
+
+\frontmatter
+\maketitle
+\tableofcontents
+
+\mainmatter
+
+\begin{refsection}
+  \chapter{Introduction}
+  \label{ch:intro}
+  
+  Content with citations \cite{ref1}...
+  
+  \printbibliography[heading=subbibliography]
+\end{refsection}
+
+\begin{refsection}
+  \chapter{Quantum Electrodynamics}
+  \label{ch:qed}
+  
+  Building on \zigmaref{ch:intro}, we now...
+  
+  \printbibliography[heading=subbibliography]
+\end{refsection}
+
+\end{document}
+\end{lstlisting}
+
+\chapter{Troubleshooting}
+
+\section{Common Issues}
+
+\subsection{Cross-References Show ??}
+
+\textbf{Problem}: References display as "??" instead of numbers.
+
+\textbf{Solution}: Run LuaLaTeX twice (or use latexmk):
+
+\begin{lstlisting}[language=bash]
+lualatex document.tex
+lualatex document.tex
+\end{lstlisting}
+
+\subsection{Bibliography Not Appearing}
+
+\textbf{Problem}: Bibliography section is empty.
+
+\textbf{Solution}: Run the complete compilation sequence:
+
+\begin{lstlisting}[language=bash]
+lualatex document.tex
+biber document        # or bibtex
+lualatex document.tex
+lualatex document.tex
+\end{lstlisting}
+
+Or use latexmk:
+
+\begin{lstlisting}[language=bash]
+latexmk -lualatex document.tex
+\end{lstlisting}
+
+\subsection{ORCID Icons Not Showing}
+
+\textbf{Problem}: ORCID identifiers don't display icons.
+
+\textbf{Solution}: Install the \pkg{academicons} package. On TeX Live:
+
+\begin{lstlisting}[language=bash]
+tlmgr install academicons
+\end{lstlisting}
+
+\subsection{Headers/Footers Not Working}
+
+\textbf{Problem}: Custom headers/footers not applied.
+
+\textbf{Solution}: Header/footer customization is fully supported only in rho base class. For other base classes, use their native mechanisms.
+
+\subsection{Layout Options Ignored}
+
+\textbf{Problem}: Margin settings in \cmd{zigmasetup} don't work.
+
+\textbf{Solution}: Layout options must be class options, not \cmd{zigmasetup} keys:
+
+\begin{lstlisting}
+% Wrong:
+\zigmasetup{marginleft=3cm}  % Doesn't work
+
+% Correct:
+\documentclass[marginleft=3cm]{zigma-class/zigma}
+\end{lstlisting}
+
+\section{Debug Mode}
+
+Enable debug output to diagnose issues:
+
+\begin{lstlisting}
+\zigmasetup{
+  debug = {true},
+}
+\end{lstlisting}
+
+This prints diagnostic information to the console:
+\begin{itemize}
+  \item Key parsing details
+  \item Author registration
+  \item State dumps
+  \item Module loading
+\end{itemize}
+
+\section{Getting Help}
+
+\begin{itemize}
+  \item \textbf{Repository}: \url{https://git.xed.it/exedre/zigma-class}
+  \item \textbf{Issues}: \url{https://git.xed.it/exedre/zigma-class/issues}
+  \item \textbf{Email}: \texttt{emmanuele@exedre.org}
+\end{itemize}
+
+\chapter{Version History}
+
+\section{Version 0.9.0 (November 7, 2025)}
+
+\textbf{Major Release}: Smart Cross-Reference System
+
+\begin{itemize}
+  \item Smart cross-reference system with auto-detection
+  \item 11 supported label types
+  \item Multiple reference support with Oxford comma
+  \item Multilingual label support (23 new keys)
+  \item 15 total citation styles
+  \item Complete documentation and test coverage
+\end{itemize}
+
+\section{Version 0.8.7 (November 7, 2025)}
+
+\textbf{Citation Styles Expansion}
+
+\begin{itemize}
+  \item Added 8 new citation styles
+  \item Total: 15 citation styles with complete documentation
+  \item Philosophy citation style
+\end{itemize}
+
+\section{Version 0.8.6 (November 7, 2025)}
+
+\textbf{Major Refactoring}
+
+\begin{itemize}
+  \item Renamed plugins → baseclasses
+  \item Templates reorganization
+  \item Test suite rationalization (47 tests)
+  \item Integration guides (Zotero, Mendeley)
+\end{itemize}
+
+\section{Version 0.8.5 (November 7, 2025)}
+
+\textbf{Bibliography Integration}
+
+\begin{itemize}
+  \item Complete bibliography support
+  \item 6 initial citation presets
+  \item Per-chapter bibliographies
+  \item Split bibliographies by keyword
+  \item Multiple .bib file support
+\end{itemize}
+
+\section{Earlier Versions}
+
+\begin{description}
+  \item[v0.8.0] Metadata footer system, clickable titles
+  \item[v0.7.0] Complete plugin system with 4 plugins
+  \item[v0.6.x] ORCID integration, corresponding markers, memoir plugin, KOMA plugin
+  \item[v0.5.0] Core system with author management
+\end{description}
+
+For complete version history, see \texttt{CHANGELOG.md} in the repository.
+
+\chapter{Future Roadmap}
+
+\section{Version 1.0.0 (Target: Q2 2026)}
+
+CTAN Release:
+
+\begin{itemize}
+  \item TDS (TeX Directory Structure) packaging
+  \item Complete PDF manual (this document)
+  \item Polished example collection
+  \item Installation documentation
+  \item CTAN submission
+\end{itemize}
+
+\section{Beyond v1.0.0}
+
+Potential future features:
+
+\begin{itemize}
+  \item Additional base classes (beamer, revtex)
+  \item Enhanced validation system
+  \item Performance optimizations
+  \item Additional templates
+  \item Community contributions
+\end{itemize}
+
+%% ====================================================================
+%% INDEX
+%% ====================================================================
+
+\backmatter
+
+\chapter*{Index}
+\addcontentsline{toc}{chapter}{Index}
+
+\begin{multicols}{2}
+\small
+
+\textbf{A}
+
+Abstract, \pageref{sec:intro}\\
+Academicons package, 23\\
+Affiliations, 34--35\\
+APA style, 51\\
+Authors, 34--38
+
+\bigskip
+
+\textbf{B}
+
+Base classes, 76--80\\
+Bibliography, 47--59\\
+— multiple files, 53\\
+— per-chapter, 54\\
+— split, 55\\
+Biblatex, 48
+
+\bigskip
+
+\textbf{C}
+
+Chicago style, 51\\
+Citations, 48--52\\
+Class options, 110--111\\
+Colors, 89\\
+Commands, 107--109\\
+Configuration, 30--33\\
+Corresponding authors, 37--38\\
+Cross-references, 60--75
+
+\bigskip
+
+\textbf{D}
+
+Debug mode, 117\\
+DOI, 41--42
+
+\bigskip
+
+\textbf{E}
+
+Examples, 112--114
+
+\bigskip
+
+\textbf{H}
+
+Harvard style, 51\\
+Headers and footers, 88--89
+
+\bigskip
+
+\textbf{I}
+
+IEEE style, 51\\
+Installation, 16--17
+
+\bigskip
+
+\textbf{K}
+
+Keywords, 32\\
+KOMA-Script, 79
+
+\bigskip
+
+\textbf{L}
+
+Labels, 60--75\\
+Layout options, 90, 111\\
+License, 2
+
+\bigskip
+
+\textbf{M}
+
+Memoir base class, 78\\
+Metadata, 41--46\\
+MLA style, 51\\
+Multilingual support, 71--73
+
+\bigskip
+
+\textbf{N}
+
+Nature style, 51
+
+\bigskip
+
+\textbf{O}
+
+ORCID, 36
+
+\bigskip
+
+\textbf{P}
+
+Page numbering, 90\\
+Philosophy style, 51
+
+\bigskip
+
+\textbf{R}
+
+References, 60--75\\
+Requirements, 15\\
+Rho base class, 80
+
+\bigskip
+
+\textbf{S}
+
+Setup command, 30
+
+\bigskip
+
+\textbf{T}
+
+Templates, 81--87\\
+Title page, 30--33\\
+Troubleshooting, 115--117
+
+\bigskip
+
+\textbf{V}
+
+Vancouver style, 51\\
+Version history, 118--119
+
+\bigskip
+
+\textbf{Z}
+
+Zigmaref, 60--70\\
+Zigmasetup, 30
+
+\end{multicols}
+
+\end{document}

@@ -1,0 +1,116 @@
+%% ============================================================================
+%% Zigma Template: IEEE Conference Paper
+%% ============================================================================
+%%
+%% This template configures Zigma for IEEE conference paper format:
+%% - Two-column layout
+%% - 0.75 inch margins (IEEE standard)
+%% - IEEE numeric citation style
+%% - Minimal headers (title left, page right)
+%%
+%% USAGE:
+%%   \documentclass[template=ieee-conference,bibfile=refs.bib]{zigma}
+%%
+%% OVERRIDES:
+%%   User options always win. Template sets defaults only.
+%%   Example: template=ieee-conference,marginleft=1in → uses 1in
+%%
+%% NOTE: This file is loaded from within \ExplSyntaxOn in zigma.cls
+%%       Temporarily switch off for LaTeX2e commands, then back on for expl3
+
+% Temporarily switch to normal LaTeX syntax for class option manipulation
+\ExplSyntaxOff
+
+%% ============================================================================
+%% Class Options (apply only if user didn't specify)
+%% ============================================================================
+
+% Base class: article (two-column)
+\def\@tempa{extarticle}
+\ifx\zigma@baseclass\@tempa
+  % Default value, set to article
+  \def\zigma@baseclass{article}
+\else
+  % User specified something else
+  \def\@tempb{article}
+  \ifx\zigma@baseclass\@tempb
+    % User chose article, OK
+  \else
+    % User chose something else (memoir, koma, etc.)
+    \typeout{[TEMPLATE WARNING] ieee-conference expects article, but baseclass=\zigma@baseclass\space specified}
+    \typeout{[TEMPLATE WARNING] Using user choice: \zigma@baseclass}
+  \fi
+\fi
+
+% Margins: IEEE standard 0.75in (only if still default)
+\def\@tempa{1.25cm}
+\ifx\zigma@marginleft\@tempa
+  \def\zigma@marginleft{0.75in}
+  \def\zigma@marginright{0.75in}
+  \def\zigma@margintop{0.75in}
+  \def\zigma@marginbottom{0.75in}
+\fi
+
+% Column separation (only if still default)
+\def\@tempa{15pt}
+\ifx\zigma@columnsep\@tempa
+  \def\zigma@columnsep{0.25in}
+\fi
+
+% Bibliography preset: IEEE (only if empty)
+\ifx\zigma@bibpreset\@empty
+  \def\zigma@bibpreset{ieee}
+  \setbool{zigma@bib}{true}
+\fi
+
+% Switch to expl3 syntax for function definition
+\ExplSyntaxOn
+
+%% ============================================================================
+%% Post-Setup Hook (apply after \zigmasetup)
+%% ============================================================================
+%%
+%% This hook sets defaults for zigmasetup keys that user didn't specify.
+%% It runs AFTER user's \zigmasetup{...} so we can detect what they set.
+%%
+
+\cs_new_protected:Npn \zigma_template_postsetup:
+  {
+    % Header: running title on left, page number on right
+    \tl_if_empty:NT \g_zigma_header_left_tl
+      {
+        \tl_gset:Nn \g_zigma_header_left_tl 
+          { 
+            \small\itshape
+            \tl_use:N \g_zigma_title_tl 
+          }
+      }
+    
+    \tl_if_empty:NT \g_zigma_header_right_tl
+      {
+        \tl_gset:Nn \g_zigma_header_right_tl { \thepage }
+      }
+    
+    % Footer: empty (IEEE conference style)
+    \tl_if_empty:NT \g_zigma_footer_center_tl
+      {
+        \tl_gset:Nn \g_zigma_footer_center_tl { }
+      }
+    
+    % Corresponding marker: envelope (common in IEEE)
+    \tl_if_empty:NT \g_zigma_corresponding_marker_tl
+      {
+        \tl_gset:Nn \g_zigma_corresponding_marker_tl { envelope }
+      }
+  }
+
+\ExplSyntaxOff
+
+%% ============================================================================
+%% Template Information
+%% ============================================================================
+%% Template: ieee-conference
+%% Version: 1.0
+%% Date: 2025-11-07
+%% Author: Zigma Template System
+%% Description: IEEE conference paper format (two-column, 0.75in margins)

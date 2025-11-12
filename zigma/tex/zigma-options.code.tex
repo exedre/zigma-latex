@@ -1,0 +1,32 @@
+%% Zigma LaTeX Class - Options Management
+%% Handles class options including baseclass selection
+
+\ExplSyntaxOn
+
+%% ========================================================================
+%% Class Options - Base Class Selection
+%% ========================================================================
+
+% Store the base class name (default: extarticle)
+\tl_new:N \g_zigma_baseclass_tl
+\tl_gset:Nn \g_zigma_baseclass_tl { extarticle }
+
+% Define key for baseclass option
+\keys_define:nn { zigma / classoptions }
+  {
+    baseclass .tl_gset:N = \g_zigma_baseclass_tl,
+    baseclass .initial:n = { extarticle },
+  }
+
+% Process unknown options: pass to base class
+\DeclareOption* { \PassOptionsToClass { \CurrentOption } { \g_zigma_baseclass_tl } }
+
+% Custom option processing for key-value options
+\DeclareOption { baseclass }
+  {
+    % This will be handled by kvoptions or similar
+  }
+
+\ExplSyntaxOff
+
+\endinput

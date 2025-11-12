@@ -1,0 +1,88 @@
+%% ============================================================================
+%% Zigma Template: Nature Journal Style
+%% ============================================================================
+%%
+%% This template configures Zigma for Nature journal article format:
+%% - Single column layout
+%% - Compact margins
+%% - Nature numeric citation style
+%% - Minimal headers
+%%
+%% USAGE:
+%%   \documentclass[template=nature]{zigma}
+%%
+%% OVERRIDES:
+%%   User options always win. Template sets defaults only.
+%%
+%% NOTE: This file is loaded from within \ExplSyntaxOn in zigma.cls
+
+% Temporarily switch to normal LaTeX syntax for class option manipulation
+\ExplSyntaxOff
+
+%% ============================================================================
+%% Class Options (apply only if user didn't specify)
+%% ============================================================================
+
+% Base class: article (single column)
+\def\@tempa{extarticle}
+\ifx\zigma@baseclass\@tempa
+  \def\zigma@baseclass{article}
+\fi
+
+% Margins: Nature compact (0.8in all around)
+\def\@tempa{1.25cm}
+\ifx\zigma@marginleft\@tempa
+  \def\zigma@marginleft{0.8in}
+  \def\zigma@marginright{0.8in}
+  \def\zigma@margintop{0.8in}
+  \def\zigma@marginbottom{0.8in}
+\fi
+
+% Bibliography preset: Nature
+\ifx\zigma@bibpreset\@empty
+  \def\zigma@bibpreset{nature}
+  \setbool{zigma@bib}{true}
+\fi
+
+% Switch to expl3 syntax for function definition
+\ExplSyntaxOn
+
+%% ============================================================================
+%% Post-Setup Hook (apply after \zigmasetup)
+%% ============================================================================
+
+\cs_new_protected:Npn \zigma_template_postsetup:
+  {
+    % Header: minimal (empty)
+    \tl_if_empty:NT \g_zigma_header_left_tl
+      {
+        \tl_gset:Nn \g_zigma_header_left_tl { }
+      }
+    
+    \tl_if_empty:NT \g_zigma_header_right_tl
+      {
+        \tl_gset:Nn \g_zigma_header_right_tl { }
+      }
+    
+    % Footer: page number only
+    \tl_if_empty:NT \g_zigma_footer_center_tl
+      {
+        \tl_gset:Nn \g_zigma_footer_center_tl { \thepage }
+      }
+    
+    % Corresponding marker: star (Nature style)
+    \tl_if_empty:NT \g_zigma_corresponding_marker_tl
+      {
+        \tl_gset:Nn \g_zigma_corresponding_marker_tl { star }
+      }
+  }
+
+\ExplSyntaxOff
+
+%% ============================================================================
+%% Template Information
+%% ============================================================================
+%% Template: nature
+%% Version: 1.0
+%% Date: 2025-11-07
+%% Description: Nature journal article format (single column, compact)

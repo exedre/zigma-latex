@@ -1,0 +1,265 @@
+%% ============================================================================
+%% Zigma Cross-Reference Module
+%% ============================================================================
+%%
+%% This module provides intelligent cross-referencing with automatic type
+%% detection and formatting.
+%%
+%% FEATURES:
+%%   - Smart label detection (sec:, fig:, tab:, eq:, etc.)
+%%   - Automatic prefix formatting (Section, Figure, Table, etc.)
+%%   - Multiple reference support with proper formatting
+%%   - Page reference support
+%%   - Language customization via zigmasetup
+%%   - Compatible with hyperref
+%%
+%% COMMANDS:
+%%   \zigmaref{label}        - Smart reference with prefix
+%%   \Zigmaref{label}        - Uppercase variant
+%%   \zigmaref*{label}       - Number only (no prefix)
+%%   \zigmarefs{lab1,lab2}   - Multiple references
+%%   \zigmapageref{label}    - Page reference
+%%   \zigmafullref{label}    - Full reference (prefix + number + page)
+%%
+%% NOTE: Requires hyperref package (already loaded by zigma.cls)
+
+\ExplSyntaxOn
+
+%% ============================================================================
+%% Label Type Detection and Formatting
+%% ============================================================================
+
+% Define label type map (prefix -> name)
+\prop_new:N \g_zigma_label_types_prop
+
+\prop_gput:Nnn \g_zigma_label_types_prop { sec } { section }
+\prop_gput:Nnn \g_zigma_label_types_prop { ch } { chapter }
+\prop_gput:Nnn \g_zigma_label_types_prop { fig } { figure }
+\prop_gput:Nnn \g_zigma_label_types_prop { tab } { table }
+\prop_gput:Nnn \g_zigma_label_types_prop { eq } { equation }
+\prop_gput:Nnn \g_zigma_label_types_prop { lst } { listing }
+\prop_gput:Nnn \g_zigma_label_types_prop { alg } { algorithm }
+\prop_gput:Nnn \g_zigma_label_types_prop { thm } { theorem }
+\prop_gput:Nnn \g_zigma_label_types_prop { lem } { lemma }
+\prop_gput:Nnn \g_zigma_label_types_prop { def } { definition }
+\prop_gput:Nnn \g_zigma_label_types_prop { app } { appendix }
+
+%% Detect label type from label string
+%% Input: #1 = label (e.g., "sec:intro")
+%% Output: Sets \l_zigma_label_type_tl to type name (e.g., "section")
+\tl_new:N \l_zigma_label_type_tl
+\tl_new:N \l_zigma_label_prefix_tl
+
+\cs_new_protected:Npn \zigma_detect_label_type:n #1
+  {
+    \tl_clear:N \l_zigma_label_type_tl
+    \tl_clear:N \l_zigma_label_prefix_tl
+    
+    % Extract prefix before colon
+    \regex_extract_once:nnNTF { ^([a-z]+): } {#1} \l_tmpa_seq
+      {
+        % Got prefix
+        \tl_set:Nx \l_zigma_label_prefix_tl { \seq_item:Nn \l_tmpa_seq { 2 } }
+        
+        % Lookup type
+        \prop_get:NVNTF \g_zigma_label_types_prop \l_zigma_label_prefix_tl \l_zigma_label_type_tl
+          {
+            % Type found
+          }
+          {
+            % Unknown prefix, use generic
+            \tl_set:Nn \l_zigma_label_type_tl { ref }
+          }
+      }
+      {
+        % No prefix, use generic
+        \tl_set:Nn \l_zigma_label_type_tl { ref }
+      }
+  }
+
+%% ============================================================================
+%% Label Name Variables (customizable via zigmasetup)
+%% ============================================================================
+%% Note: Variables declared conditionally (may already exist in zigma-core)
+
+\tl_if_exist:NF \g_zigma_label_section_tl { \tl_new:N \g_zigma_label_section_tl }
+\tl_if_exist:NF \g_zigma_label_chapter_tl { \tl_new:N \g_zigma_label_chapter_tl }
+\tl_if_exist:NF \g_zigma_label_figure_tl { \tl_new:N \g_zigma_label_figure_tl }
+\tl_if_exist:NF \g_zigma_label_table_tl { \tl_new:N \g_zigma_label_table_tl }
+\tl_if_exist:NF \g_zigma_label_equation_tl { \tl_new:N \g_zigma_label_equation_tl }
+\tl_if_exist:NF \g_zigma_label_listing_tl { \tl_new:N \g_zigma_label_listing_tl }
+\tl_if_exist:NF \g_zigma_label_algorithm_tl { \tl_new:N \g_zigma_label_algorithm_tl }
+\tl_if_exist:NF \g_zigma_label_theorem_tl { \tl_new:N \g_zigma_label_theorem_tl }
+\tl_if_exist:NF \g_zigma_label_lemma_tl { \tl_new:N \g_zigma_label_lemma_tl }
+\tl_if_exist:NF \g_zigma_label_definition_tl { \tl_new:N \g_zigma_label_definition_tl }
+\tl_if_exist:NF \g_zigma_label_appendix_tl { \tl_new:N \g_zigma_label_appendix_tl }
+\tl_if_exist:NF \g_zigma_label_ref_tl { \tl_new:N \g_zigma_label_ref_tl }
+
+% Plural forms
+\tl_if_exist:NF \g_zigma_label_sections_tl { \tl_new:N \g_zigma_label_sections_tl }
+\tl_if_exist:NF \g_zigma_label_chapters_tl { \tl_new:N \g_zigma_label_chapters_tl }
+\tl_if_exist:NF \g_zigma_label_figures_tl { \tl_new:N \g_zigma_label_figures_tl }
+\tl_if_exist:NF \g_zigma_label_tables_tl { \tl_new:N \g_zigma_label_tables_tl }
+\tl_if_exist:NF \g_zigma_label_equations_tl { \tl_new:N \g_zigma_label_equations_tl }
+\tl_if_exist:NF \g_zigma_label_listings_tl { \tl_new:N \g_zigma_label_listings_tl }
+\tl_if_exist:NF \g_zigma_label_algorithms_tl { \tl_new:N \g_zigma_label_algorithms_tl }
+\tl_if_exist:NF \g_zigma_label_theorems_tl { \tl_new:N \g_zigma_label_theorems_tl }
+\tl_if_exist:NF \g_zigma_label_lemmas_tl { \tl_new:N \g_zigma_label_lemmas_tl }
+\tl_if_exist:NF \g_zigma_label_definitions_tl { \tl_new:N \g_zigma_label_definitions_tl }
+\tl_if_exist:NF \g_zigma_label_appendices_tl { \tl_new:N \g_zigma_label_appendices_tl }
+
+% Default English labels (set only if empty)
+\tl_if_empty:NT \g_zigma_label_section_tl { \tl_gset:Nn \g_zigma_label_section_tl { Section } }
+\tl_if_empty:NT \g_zigma_label_chapter_tl { \tl_gset:Nn \g_zigma_label_chapter_tl { Chapter } }
+\tl_if_empty:NT \g_zigma_label_figure_tl { \tl_gset:Nn \g_zigma_label_figure_tl { Figure } }
+\tl_if_empty:NT \g_zigma_label_table_tl { \tl_gset:Nn \g_zigma_label_table_tl { Table } }
+\tl_if_empty:NT \g_zigma_label_equation_tl { \tl_gset:Nn \g_zigma_label_equation_tl { Equation } }
+\tl_if_empty:NT \g_zigma_label_listing_tl { \tl_gset:Nn \g_zigma_label_listing_tl { Listing } }
+\tl_if_empty:NT \g_zigma_label_algorithm_tl { \tl_gset:Nn \g_zigma_label_algorithm_tl { Algorithm } }
+\tl_if_empty:NT \g_zigma_label_theorem_tl { \tl_gset:Nn \g_zigma_label_theorem_tl { Theorem } }
+\tl_if_empty:NT \g_zigma_label_lemma_tl { \tl_gset:Nn \g_zigma_label_lemma_tl { Lemma } }
+\tl_if_empty:NT \g_zigma_label_definition_tl { \tl_gset:Nn \g_zigma_label_definition_tl { Definition } }
+\tl_if_empty:NT \g_zigma_label_appendix_tl { \tl_gset:Nn \g_zigma_label_appendix_tl { Appendix } }
+\tl_if_empty:NT \g_zigma_label_ref_tl { \tl_gset:Nn \g_zigma_label_ref_tl { Ref. } }
+
+\tl_if_empty:NT \g_zigma_label_sections_tl { \tl_gset:Nn \g_zigma_label_sections_tl { Sections } }
+\tl_if_empty:NT \g_zigma_label_chapters_tl { \tl_gset:Nn \g_zigma_label_chapters_tl { Chapters } }
+\tl_if_empty:NT \g_zigma_label_figures_tl { \tl_gset:Nn \g_zigma_label_figures_tl { Figures } }
+\tl_if_empty:NT \g_zigma_label_tables_tl { \tl_gset:Nn \g_zigma_label_tables_tl { Tables } }
+\tl_if_empty:NT \g_zigma_label_equations_tl { \tl_gset:Nn \g_zigma_label_equations_tl { Equations } }
+\tl_if_empty:NT \g_zigma_label_listings_tl { \tl_gset:Nn \g_zigma_label_listings_tl { Listings } }
+\tl_if_empty:NT \g_zigma_label_algorithms_tl { \tl_gset:Nn \g_zigma_label_algorithms_tl { Algorithms } }
+\tl_if_empty:NT \g_zigma_label_theorems_tl { \tl_gset:Nn \g_zigma_label_theorems_tl { Theorems } }
+\tl_if_empty:NT \g_zigma_label_lemmas_tl { \tl_gset:Nn \g_zigma_label_lemmas_tl { Lemmas } }
+\tl_if_empty:NT \g_zigma_label_definitions_tl { \tl_gset:Nn \g_zigma_label_definitions_tl { Definitions } }
+\tl_if_empty:NT \g_zigma_label_appendices_tl { \tl_gset:Nn \g_zigma_label_appendices_tl { Appendices } }
+
+%% Get label name for type
+\cs_new:Npn \zigma_get_label_name:n #1
+  {
+    \str_case:nn {#1}
+      {
+        { section } { \tl_use:N \g_zigma_label_section_tl }
+        { chapter } { \tl_use:N \g_zigma_label_chapter_tl }
+        { figure } { \tl_use:N \g_zigma_label_figure_tl }
+        { table } { \tl_use:N \g_zigma_label_table_tl }
+        { equation } { \tl_use:N \g_zigma_label_equation_tl }
+        { listing } { \tl_use:N \g_zigma_label_listing_tl }
+        { algorithm } { \tl_use:N \g_zigma_label_algorithm_tl }
+        { theorem } { \tl_use:N \g_zigma_label_theorem_tl }
+        { lemma } { \tl_use:N \g_zigma_label_lemma_tl }
+        { definition } { \tl_use:N \g_zigma_label_definition_tl }
+        { appendix } { \tl_use:N \g_zigma_label_appendix_tl }
+        { ref } { \tl_use:N \g_zigma_label_ref_tl }
+      }
+  }
+
+%% Get plural label name
+\cs_new:Npn \zigma_get_label_name_plural:n #1
+  {
+    \str_case:nn {#1}
+      {
+        { section } { \tl_use:N \g_zigma_label_sections_tl }
+        { chapter } { \tl_use:N \g_zigma_label_chapters_tl }
+        { figure } { \tl_use:N \g_zigma_label_figures_tl }
+        { table } { \tl_use:N \g_zigma_label_tables_tl }
+        { equation } { \tl_use:N \g_zigma_label_equations_tl }
+        { listing } { \tl_use:N \g_zigma_label_listings_tl }
+        { algorithm } { \tl_use:N \g_zigma_label_algorithms_tl }
+        { theorem } { \tl_use:N \g_zigma_label_theorems_tl }
+        { lemma } { \tl_use:N \g_zigma_label_lemmas_tl }
+        { definition } { \tl_use:N \g_zigma_label_definitions_tl }
+        { appendix } { \tl_use:N \g_zigma_label_appendices_tl }
+      }
+  }
+
+%% ============================================================================
+%% User Commands
+%% ============================================================================
+
+%% \zigmaref{label} - Smart reference with prefix
+\NewDocumentCommand \zigmaref { s m }
+  {
+    \IfBooleanTF {#1}
+      {
+        % Starred: number only
+        \ref{#2}
+      }
+      {
+        % Normal: prefix + number
+        \group_begin:
+          \zigma_detect_label_type:n {#2}
+          \exp_args:NV \zigma_get_label_name:n \l_zigma_label_type_tl
+          \nobreakspace
+          \ref{#2}
+        \group_end:
+      }
+  }
+
+%% \Zigmaref{label} - Uppercase variant
+\NewDocumentCommand \Zigmaref { m }
+  {
+    \group_begin:
+      \zigma_detect_label_type:n {#1}
+      \MakeUppercase{ \exp_args:NV \zigma_get_label_name:n \l_zigma_label_type_tl }
+      \nobreakspace
+      \ref{#1}
+    \group_end:
+  }
+
+%% \zigmapageref{label} - Page reference
+\NewDocumentCommand \zigmapageref { m }
+  {
+    on~page~\pageref{#1}
+  }
+
+%% \zigmafullref{label} - Full reference (prefix + number + page)
+\NewDocumentCommand \zigmafullref { m }
+  {
+    \zigmaref{#1}~on~page~\pageref{#1}
+  }
+
+%% \zigmarefs{label1,label2,...} - Multiple references
+\NewDocumentCommand \zigmarefs { m }
+  {
+    \zigma_refs_multiple:n {#1}
+  }
+
+\cs_new_protected:Npn \zigma_refs_multiple:n #1
+  {
+    \clist_set:Nn \l_tmpa_clist {#1}
+    \int_compare:nNnTF { \clist_count:N \l_tmpa_clist } > { 1 }
+      {
+        % Multiple refs: detect type from first, use plural
+        \tl_set:Nx \l_tmpa_tl { \clist_item:Nn \l_tmpa_clist { 1 } }
+        \exp_args:NV \zigma_detect_label_type:n \l_tmpa_tl
+        \exp_args:NV \zigma_get_label_name_plural:n \l_zigma_label_type_tl
+        \nobreakspace
+        
+        % Format numbers with commas and "and"
+        \int_zero:N \l_tmpa_int
+        \clist_map_inline:Nn \l_tmpa_clist
+          {
+            \int_incr:N \l_tmpa_int
+            \int_compare:nNnTF { \l_tmpa_int } = { \clist_count:N \l_tmpa_clist }
+              {
+                % Last item
+                \int_compare:nNnTF { \clist_count:N \l_tmpa_clist } > { 2 }
+                  { ,~and~ }
+                  { ~and~ }
+                \ref{##1}
+              }
+              {
+                \int_compare:nNnTF { \l_tmpa_int } = { 1 }
+                  { \ref{##1} }
+                  { ,~\ref{##1} }
+              }
+          }
+      }
+      {
+        % Single ref: use \zigmaref
+        \zigmaref{\clist_item:Nn \l_tmpa_clist { 1 }}
+      }
+  }
+
+\ExplSyntaxOff

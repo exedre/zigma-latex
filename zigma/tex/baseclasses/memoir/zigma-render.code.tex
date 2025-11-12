@@ -1,0 +1,455 @@
+%% Zigma LaTeX Class - Memoir Plugin
+%% Rendering implementation for memoir class (books, theses, long documents)
+
+%% ========================================================================
+%% Memoir Plugin - Layout Configuration
+%% ========================================================================
+
+% Apply geometry with class option values (defaults in zigma.cls)
+% Defaults: 1.25cm left/right, 2cm top/bottom, 15pt columnsep
+% Override with: \documentclass[marginleft=3cm,margintop=2.5cm,...]{zigma}
+\RequirePackage{geometry}
+\geometry{
+  left=\zigma@marginleft,
+  right=\zigma@marginright,
+  top=\zigma@margintop,
+  bottom=\zigma@marginbottom
+}
+
+% Column separation from class option
+\setlength{\columnsep}{\zigma@columnsep}
+
+%% ========================================================================
+%% Memoir Plugin - Header/Footer Configuration
+%% ========================================================================
+
+% Memoir has native header/footer support - don't use fancyhdr
+% Use memoir's \makepagestyle commands
+\makepagestyle{zigma}
+
+% Configure headers using zigma variables
+\makeevenhead{zigma}{\small\itshape\g_zigma_header_left_tl}{\small\itshape\g_zigma_header_center_tl}{\small\itshape\g_zigma_header_right_tl}
+\makeoddhead{zigma}{\small\itshape\g_zigma_header_left_tl}{\small\itshape\g_zigma_header_center_tl}{\small\itshape\g_zigma_header_right_tl}
+
+% Configure footers using zigma variables
+\makeevenfoot{zigma}{\small\g_zigma_footer_left_tl}{\small\thepage}{\small\g_zigma_footer_right_tl}
+\makeoddfoot{zigma}{\small\g_zigma_footer_left_tl}{\small\thepage}{\small\g_zigma_footer_right_tl}
+
+% No header/footer rules
+\makeheadrule{zigma}{\textwidth}{0pt}
+\makefootrule{zigma}{\textwidth}{0pt}{0pt}
+
+% Activate the page style
+\pagestyle{zigma}
+
+\ExplSyntaxOn
+
+%% ========================================================================
+%% Memoir Plugin - Maketitle Implementation
+%% ========================================================================
+
+% This plugin provides the rendering layer for memoir class
+% Memoir is designed for longer documents: books, theses, reports
+% Key differences from article:
+% - No twocolumn mode (single column focus)
+% - Chapter support
+% - More sophisticated front matter handling
+% - Built-in dedication, epigraph support
+
+\zigma_log:n { [PLUGIN]~Loading~memoir~plugin }
+
+%% ========================================================================
+%% Maketitle Rendering
+%% ========================================================================
+
+\cs_new_protected:Npn \zigma_memoir_render_title:
+  {
+    \zigma_log:n { [MEMOIR~PLUGIN]~Rendering~title }
+    
+    % Render title if set
+    \tl_if_empty:NF \g_zigma_title_tl
+      {
+        \begin{center}
+          % Check if title should be a hyperlink
+          \tl_if_empty:NTF \g_zigma_title_url_tl
+            {
+              {\LARGE\bfseries \tl_use:N \g_zigma_title_tl}
+            }
+            {
+              {\LARGE\bfseries \href{\g_zigma_title_url_tl}{\tl_use:N \g_zigma_title_tl}}
+            }
+          
+          % Render subtitle if set
+          \tl_if_empty:NF \g_zigma_subtitle_tl
+            {
+              \\[1em]
+              {\Large \tl_use:N \g_zigma_subtitle_tl}
+            }
+        \end{center}
+        \vspace{2em}
+      }
+  }
+
+\cs_new_protected:Npn \zigma_memoir_render_authors:
+  {
+    \zigma_log:n { [MEMOIR~PLUGIN]~Rendering~authors }
+    
+    % Get author count from sequence
+    \int_compare:nNnT { \seq_count:N \g_zigma_author_ids_seq } > { 0 }
+      {
+        \begin{center}
+          % Render author names with affiliation markers
+          \seq_map_indexed_inline:Nn \g_zigma_author_ids_seq
+            {
+              \zigma_memoir_render_single_author:n { ##2 }
+              \int_compare:nNnF { ##1 } = { \seq_count:N \g_zigma_author_ids_seq }
+                { \\[0.3em] }  % Line break between authors for memoir
+            }
+        \end{center}
+        
+        % Render affiliations
+        \zigma_memoir_render_affiliations:
+        
+        \vspace{1em}
+      }
+  }
+
+\cs_new_protected:Npn \zigma_memoir_render_single_author:n #1
+  {
+    % Get author name using ID
+    \tl_clear:N \l_tmpa_tl
+    \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { name } \l_tmpa_tl
+    
+    \quark_if_no_value:NF \l_tmpa_tl
+      {
+        {\large \tl_use:N \l_tmpa_tl}
+        
+        % Get email and add as link with envelope symbol
+        \tl_clear:N \l__zigma_memoir_email_tl
+        \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { email } \l__zigma_memoir_email_tl
+        
+        \quark_if_no_value:NF \l__zigma_memoir_email_tl
+          {
+            \tl_if_empty:NF \l__zigma_memoir_email_tl
+              {
+                \textsuperscript{
+                  \href{mailto:\tl_use:N\l__zigma_memoir_email_tl}{\tiny\Letter}
+                }
+              }
+          }
+        
+        % Get ORCID and add as link with icon
+        \tl_clear:N \l__zigma_memoir_orcid_tl
+        \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { orcid } \l__zigma_memoir_orcid_tl
+        
+        \quark_if_no_value:NF \l__zigma_memoir_orcid_tl
+          {
+            \tl_if_empty:NF \l__zigma_memoir_orcid_tl
+              {
+                \textsuperscript{
+                  \href{https://orcid.org/\tl_use:N\l__zigma_memoir_orcid_tl}{\tiny\aiOrcid}
+                }
+              }
+          }
+        
+        % Add corresponding marker if set (BEFORE affiliations)
+        \tl_clear:N \l__zigma_memoir_corr_tl
+        \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { corresponding } \l__zigma_memoir_corr_tl
+        
+        \quark_if_no_value:NF \l__zigma_memoir_corr_tl
+          {
+            \str_if_eq:VnT \l__zigma_memoir_corr_tl { true }
+              {
+                \textsuperscript{
+                  \str_case:Vn \g_zigma_corresponding_marker_tl
+                    {
+                      { envelope } { \Letter }
+                      { star } { \ensuremath{\star} }
+                      { asterisk } { * }
+                    }
+                }
+              }
+          }
+        
+        % Get affiliation list and add superscript markers
+        \tl_clear:N \l_tmpb_tl
+        \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { affiliation } \l_tmpb_tl
+        
+        \quark_if_no_value:NF \l_tmpb_tl
+          {
+            % Process comma-separated affiliation IDs
+            \tl_if_empty:NF \l_tmpb_tl
+              {
+                \textsuperscript{
+                  \clist_set:NV \l__zigma_memoir_affil_clist \l_tmpb_tl
+                  \clist_map_inline:Nn \l__zigma_memoir_affil_clist
+                    {
+                      \zigma_affil_symbol:n { ##1 }
+                    }
+                }
+              }
+          }
+      }
+  }
+
+\tl_new:N \l__zigma_memoir_email_tl
+\tl_new:N \l__zigma_memoir_orcid_tl
+\tl_new:N \l__zigma_memoir_corr_tl
+\clist_new:N \l__zigma_memoir_affil_clist
+
+% Helper to convert affiliation ID to symbol (reuse from article)
+\cs_new:Npn \zigma_affil_symbol:n #1
+  {
+    \int_case:nnF { #1 }
+      {
+        { 0 } { \ensuremath{\dagger} }
+        { 1 } { \ensuremath{\ddagger} }
+        { 2 } { \ensuremath{\S} }
+        { 3 } { \ensuremath{\P} }
+        { 4 } { \ensuremath{\|} }
+        { 5 } { \ensuremath{**} }
+      }
+      { \ensuremath{#1} } % fallback to number
+  }
+
+\cs_new_protected:Npn \zigma_memoir_render_affiliations:
+  {
+    % Iterate through registered affiliations
+    \int_set:Nn \l_tmpa_int { 0 }
+    \int_while_do:nNnn { \l_tmpa_int } < { \seq_count:N \g_zigma_affil_ids_seq }
+      {
+        \tl_clear:N \l_tmpa_tl
+        \exp_args:Nc \prop_get:NnN { g_zigma_affil_prop_\int_use:N\l_tmpa_int } { name } \l_tmpa_tl
+        
+        \quark_if_no_value:NF \l_tmpa_tl
+          {
+            \par
+            \noindent
+            \textsuperscript{ \zigma_affil_symbol:n { \int_use:N\l_tmpa_int } }
+            \tl_use:N \l_tmpa_tl
+          }
+        
+        \int_incr:N \l_tmpa_int
+      }
+  }
+
+\cs_new_protected:Npn \zigma_memoir_render_date:
+  {
+    % Render date only if date.show is true
+    \bool_if:NT \g_zigma_date_show_bool
+      {
+        \tl_if_empty:NF \g_zigma_date_tl
+          {
+            \begin{center}
+              \tl_use:N \g_zigma_date_tl
+            \end{center}
+            \vspace{1em}
+          }
+      }
+  }
+
+\cs_new_protected:Npn \zigma_memoir_render_abstract:
+  {
+    % Render abstract if set
+    \tl_if_empty:NF \g_zigma_abstract_tl
+      {
+        \begin{center}
+          \textbf{Abstract}
+        \end{center}
+        \g_zigma_abstract_tl
+        \par\vskip 1.5em
+      }
+  }
+
+\cs_new_protected:Npn \zigma_memoir_render_keywords:
+  {
+    % Render keywords if set
+    \tl_if_empty:NF \g_zigma_keywords_tl
+      {
+        \par
+        \vspace{0.5em}
+        \noindent
+        \textbf{Keywords:}~\tl_use:N \g_zigma_keywords_tl
+        \par
+        \vspace{2em}
+      }
+  }
+
+\cs_new_protected:Npn \zigma_memoir_render_metadata_footer:
+  {
+    % Count metadata items
+    \int_zero:N \l_tmpa_int
+    \tl_if_empty:NF \g_zigma_meta_doi_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_url_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_received_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_revised_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_accepted_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_published_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_license_tl { \int_incr:N \l_tmpa_int }
+    
+    \int_compare:nNnT { \l_tmpa_int } > { 0 }
+      {
+        \par
+        \vspace{1.5em}
+        \noindent
+        \hrulefill
+        \par
+        \vspace{1em}
+        
+        % DOI
+        \tl_if_empty:NF \g_zigma_meta_doi_tl
+          {
+            \noindent
+            {\bfseries DOI:}~
+            \href{https://doi.org/\g_zigma_meta_doi_tl}{\g_zigma_meta_doi_tl}
+            \par
+          }
+        
+        % URL
+        \tl_if_empty:NF \g_zigma_meta_url_tl
+          {
+            \noindent
+            {\bfseries URL:}~
+            \tl_if_empty:NTF \g_zigma_meta_url_show_tl
+              { \href{\g_zigma_meta_url_tl}{\g_zigma_meta_url_tl} }
+              { \href{\g_zigma_meta_url_tl}{\g_zigma_meta_url_show_tl} }
+            \par
+          }
+        
+        % Dates
+        \tl_if_empty:NF \g_zigma_meta_received_tl
+          {
+            \noindent
+            {\bfseries Received:}~\g_zigma_meta_received_tl\hspace{1.5em}
+          }
+        \tl_if_empty:NF \g_zigma_meta_revised_tl
+          {
+            {\bfseries Revised:}~\g_zigma_meta_revised_tl\hspace{1.5em}
+          }
+        \tl_if_empty:NF \g_zigma_meta_accepted_tl
+          {
+            {\bfseries Accepted:}~\g_zigma_meta_accepted_tl
+          }
+        \tl_if_empty:NF \g_zigma_meta_received_tl { \par }
+        
+        % Published
+        \tl_if_empty:NF \g_zigma_meta_published_tl
+          {
+            \noindent
+            {\bfseries Published:}~\g_zigma_meta_published_tl
+            \par
+          }
+        
+        % License
+        \tl_if_empty:NF \g_zigma_meta_license_tl
+          {
+            \vspace{0.5em}
+            \noindent
+            \g_zigma_meta_license_tl
+            \par
+          }
+        
+        \vspace{1em}
+        \noindent
+        \hrulefill
+        \par
+        \vspace{1.5em}
+      }
+  }
+
+%% ========================================================================
+%% Corresponding Author Footer
+%% ========================================================================
+
+\cs_new_protected:Npn \zigma_memoir_render_corresponding_footer:
+  {
+    \bool_if:NT \g_zigma_corresponding_footer_bool
+      {
+        % Collect corresponding authors
+        \tl_clear:N \l__zigma_memoir_corr_list_tl
+        \int_zero:N \l__zigma_memoir_corr_count_int
+        
+        \seq_map_inline:Nn \g_zigma_author_ids_seq
+          {
+            \tl_clear:N \l__zigma_memoir_tmp_corr_tl
+            \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_##1 } { corresponding } \l__zigma_memoir_tmp_corr_tl
+            
+            \quark_if_no_value:NF \l__zigma_memoir_tmp_corr_tl
+              {
+                \str_if_eq:VnT \l__zigma_memoir_tmp_corr_tl { true }
+                  {
+                    \int_incr:N \l__zigma_memoir_corr_count_int
+                    
+                    % Get email
+                    \tl_clear:N \l__zigma_memoir_tmp_email_tl
+                    \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_##1 } { email } \l__zigma_memoir_tmp_email_tl
+                    
+                    \quark_if_no_value:NF \l__zigma_memoir_tmp_email_tl
+                      {
+                        \tl_if_empty:NF \l__zigma_memoir_tmp_email_tl
+                          {
+                            \int_compare:nNnTF { \l__zigma_memoir_corr_count_int } > { 1 }
+                              {
+                                \tl_put_right:Nn \l__zigma_memoir_corr_list_tl { ,~ }
+                              }
+                              { }
+                            \tl_put_right:Nx \l__zigma_memoir_corr_list_tl 
+                              { \exp_not:N \href{mailto:\tl_use:N\l__zigma_memoir_tmp_email_tl}{\tl_use:N\l__zigma_memoir_tmp_email_tl} }
+                          }
+                      }
+                  }
+              }
+          }
+        
+        % Render footer if we have corresponding authors
+        \int_compare:nNnT { \l__zigma_memoir_corr_count_int } > { 0 }
+          {
+            \vspace{1.5em}
+            \noindent
+            \textsuperscript{
+              \str_case:Vn \g_zigma_corresponding_marker_tl
+                {
+                  { envelope } { \Letter }
+                  { star } { \ensuremath{\star} }
+                  { asterisk } { * }
+                }
+            }
+            ~
+            \int_compare:nNnTF { \l__zigma_memoir_corr_count_int } > { 1 }
+              { Corresponding~authors:~ }
+              { Corresponding~author:~ }
+            \tl_use:N \l__zigma_memoir_corr_list_tl
+            \par
+          }
+      }
+  }
+
+\int_new:N \l__zigma_memoir_corr_count_int
+\tl_new:N \l__zigma_memoir_corr_list_tl
+\tl_new:N \l__zigma_memoir_tmp_corr_tl
+\tl_new:N \l__zigma_memoir_tmp_email_tl
+
+%% ========================================================================
+%% Hook into zigma's maketitle
+%% ========================================================================
+
+\cs_new_protected:Npn \zigma_memoir_maketitle:
+  {
+    % Memoir uses single column focus - no twocolumn check needed
+    \zigma_memoir_render_title:
+    \zigma_memoir_render_authors:
+    \zigma_memoir_render_date:
+    \zigma_memoir_render_abstract:
+    \zigma_memoir_render_keywords:
+    \zigma_memoir_render_metadata_footer:
+    \zigma_memoir_render_corresponding_footer:
+  }
+
+% Register this rendering function
+\cs_gset_eq:NN \zigma_render_maketitle: \zigma_memoir_maketitle:
+
+\zigma_log:n { [PLUGIN]~Memoir~plugin~loaded~successfully }
+
+\ExplSyntaxOff
+
+\endinput

@@ -1,0 +1,322 @@
+%% Zigma Core - State Management (expl3)
+%% Phase 1: Global state variables and defaults
+\ExplSyntaxOn
+
+
+
+
+%% ============================================================================
+%% Global State Store
+%% ============================================================================
+
+% Configuration property list (raw user input)
+\prop_new:N \g_zigma_setup_prop
+
+%% ============================================================================
+%% State Variables - Margins & Layout (typed registers)
+%% ============================================================================
+
+\skip_new:N \g_zigma_margin_left_skip
+\skip_new:N \g_zigma_margin_right_skip
+\skip_new:N \g_zigma_margin_top_skip
+\skip_new:N \g_zigma_margin_bottom_skip
+\dim_new:N  \g_zigma_column_sep_dim
+
+%% ============================================================================
+%% State Variables - Header/Footer
+%% ============================================================================
+
+\tl_new:N \g_zigma_header_left_tl
+\tl_new:N \g_zigma_header_center_tl
+\tl_new:N \g_zigma_header_right_tl
+\tl_new:N \g_zigma_footer_left_tl
+\tl_new:N \g_zigma_footer_center_tl
+\tl_new:N \g_zigma_footer_right_tl
+\tl_new:N \g_zigma_footer_total_tl
+
+%% ============================================================================
+%% State Variables - Fonts
+%% ============================================================================
+
+\tl_new:N \g_zigma_font_engine_tl
+\tl_new:N \g_zigma_font_serif_tl
+\tl_new:N \g_zigma_font_sans_tl
+\tl_new:N \g_zigma_font_mono_tl
+
+%% ============================================================================
+%% State Variables - Colors
+%% ============================================================================
+
+\tl_new:N \g_zigma_color_main_tl
+\tl_new:N \g_zigma_color_section_tl
+\tl_new:N \g_zigma_color_accent_tl
+\tl_new:N \g_zigma_color_box_bg_tl
+\tl_new:N \g_zigma_color_box_line_tl
+
+%% ============================================================================
+%% State Variables - Journal/Title
+%% ============================================================================
+
+\tl_new:N \g_zigma_journal_name_tl
+\tl_new:N \g_zigma_journal_url_tl
+\tl_new:N \g_zigma_journal_url_show_tl
+\tl_new:N \g_zigma_title_tl
+\tl_new:N \g_zigma_subtitle_tl
+\tl_new:N \g_zigma_date_tl
+\tl_new:N \g_zigma_abstract_tl
+\tl_new:N \g_zigma_keywords_tl
+\tl_new:N \g_zigma_title_url_tl
+\tl_new:N \g_zigma_title_url_show_tl
+\tl_new:N \g_zigma_small_title_tl
+\tl_new:N \g_zigma_institution_tl
+\tl_new:N \g_zigma_day_tl
+\tl_new:N \g_zigma_dates_tl
+
+%% ============================================================================
+%% State Variables - Metadata
+%% ============================================================================
+
+\tl_new:N \g_zigma_meta_corresponding_tl
+\tl_new:N \g_zigma_meta_email_tl
+\tl_new:N \g_zigma_meta_received_tl
+\tl_new:N \g_zigma_meta_revised_tl
+\tl_new:N \g_zigma_meta_accepted_tl
+\tl_new:N \g_zigma_meta_published_tl
+\tl_new:N \g_zigma_meta_doi_tl
+\tl_new:N \g_zigma_meta_uuid_tl
+\tl_new:N \g_zigma_meta_license_tl
+\tl_new:N \g_zigma_meta_keywords_tl
+\tl_new:N \g_zigma_meta_url_tl
+\tl_new:N \g_zigma_meta_url_show_tl
+
+%% ============================================================================
+%% State Variables - Bibliography
+%% ============================================================================
+
+\tl_new:N \g_zigma_bib_backend_tl       % biblatex or natbib
+\tl_new:N \g_zigma_bib_style_tl         % citation style (numeric, authoryear, etc.)
+\tl_new:N \g_zigma_bib_file_tl          % .bib file path
+\tl_new:N \g_zigma_bib_preset_tl        % preset name (ieee, apa, chicago)
+\bool_new:N \g_zigma_bib_enable_bool    % enable bibliography support
+\bool_new:N \g_zigma_bib_sorting_bool   % enable sorting
+
+%% ============================================================================
+%% State Variables - Labels
+%% ============================================================================
+
+\tl_new:N \g_zigma_label_keyword_tl
+\tl_new:N \g_zigma_label_abstract_tl
+\tl_new:N \g_zigma_label_information_tl
+\tl_new:N \g_zigma_label_note_tl
+
+%% ============================================================================
+%% State Variables - Toggles (native booleans)
+%% ============================================================================
+
+\bool_new:N \g_zigma_show_metadata_bool
+\bool_new:N \g_zigma_date_show_bool
+\bool_gset_true:N \g_zigma_date_show_bool  % Show date by default
+\bool_new:N \g_zigma_show_abstract_bool
+\bool_new:N \g_zigma_use_dropcap_bool
+\bool_new:N \g_zigma_show_toc_bool
+\bool_new:N \g_zigma_debug_colors_bool
+\bool_new:N \g_zigma_debug_bool
+\bool_new:N \g_zigma_validate_bool
+
+%% ============================================================================
+%% Default Values
+%% ============================================================================
+
+% Margins (typed)
+\skip_gset:Nn \g_zigma_margin_left_skip   { 1.25cm }
+\skip_gset:Nn \g_zigma_margin_right_skip  { 1.25cm }
+\skip_gset:Nn \g_zigma_margin_top_skip    { 2cm }
+\skip_gset:Nn \g_zigma_margin_bottom_skip { 2cm }
+\dim_gset:Nn  \g_zigma_column_sep_dim     { 15pt }
+
+% Headers/Footers (empty by default)
+\tl_gset:Nn \g_zigma_header_left_tl   {}
+\tl_gset:Nn \g_zigma_header_center_tl {}
+\tl_gset:Nn \g_zigma_header_right_tl  {}
+\tl_gset:Nn \g_zigma_footer_left_tl   {}
+\tl_gset:Nn \g_zigma_footer_center_tl {}
+\tl_gset:Nn \g_zigma_footer_right_tl  {}
+\tl_gset:Nn \g_zigma_footer_total_tl  {true}
+
+% Fonts
+\tl_gset:Nn \g_zigma_font_engine_tl {auto}
+\tl_gset:Nn \g_zigma_font_serif_tl  {stix2}
+\tl_gset:Nn \g_zigma_font_sans_tl   {helvet}
+\tl_gset:Nn \g_zigma_font_mono_tl   {lmtt}
+
+% Colors (names)
+\tl_gset:Nn \g_zigma_color_main_tl     {zigma-main}
+\tl_gset:Nn \g_zigma_color_section_tl  {zigma-section}
+\tl_gset:Nn \g_zigma_color_accent_tl   {zigma-accent}
+\tl_gset:Nn \g_zigma_color_box_bg_tl   {zigma-box-bg}
+\tl_gset:Nn \g_zigma_color_box_line_tl {zigma-box-line}
+
+% Journal/Title (empty)
+\tl_gset:Nn \g_zigma_journal_name_tl     {}
+\tl_gset:Nn \g_zigma_journal_url_tl      {}
+\tl_gset:Nn \g_zigma_journal_url_show_tl {⌂}
+\tl_gset:Nn \g_zigma_title_url_tl        {}
+\tl_gset:Nn \g_zigma_title_url_show_tl   {⌂}
+\tl_gset:Nn \g_zigma_small_title_tl      {}
+\tl_gset:Nn \g_zigma_institution_tl      {}
+\tl_gset:Nn \g_zigma_day_tl              {}
+\tl_gset:Nn \g_zigma_dates_tl            {}
+
+% Metadata (empty)
+\tl_gset:Nn \g_zigma_meta_corresponding_tl {}
+\tl_gset:Nn \g_zigma_meta_email_tl         {}
+\tl_gset:Nn \g_zigma_meta_received_tl      {}
+\tl_gset:Nn \g_zigma_meta_revised_tl       {}
+\tl_gset:Nn \g_zigma_meta_accepted_tl      {}
+\tl_gset:Nn \g_zigma_meta_published_tl     {}
+\tl_gset:Nn \g_zigma_meta_doi_tl           {}
+\tl_gset:Nn \g_zigma_meta_uuid_tl          {}
+\tl_gset:Nn \g_zigma_meta_license_tl       {}
+\tl_gset:Nn \g_zigma_meta_keywords_tl      {}
+\tl_gset:Nn \g_zigma_meta_url_tl           {}
+\tl_gset:Nn \g_zigma_meta_url_show_tl      {false}
+
+% Bibliography (defaults)
+\tl_gset:Nn \g_zigma_bib_backend_tl  {biblatex}  % default: biblatex
+\tl_gset:Nn \g_zigma_bib_style_tl    {numeric}   % default: numeric
+\tl_gset:Nn \g_zigma_bib_file_tl     {}          % no default file
+\tl_gset:Nn \g_zigma_bib_preset_tl   {}          % no preset by default
+\bool_gset_false:N \g_zigma_bib_enable_bool      % disabled by default
+\bool_gset_true:N \g_zigma_bib_sorting_bool      % sorting enabled
+
+% Content (empty)
+\tl_gset:Nn \g_zigma_abstract_tl {}
+\tl_gset:Nn \g_zigma_keywords_tl {}
+
+% Labels (empty - use package defaults)
+\tl_gset:Nn \g_zigma_label_keyword_tl     {}
+\tl_gset:Nn \g_zigma_label_abstract_tl    {}
+\tl_gset:Nn \g_zigma_label_information_tl {}
+\tl_gset:Nn \g_zigma_label_note_tl        {}
+
+% Toggles (native booleans with defaults)
+\bool_gset_false:N \g_zigma_show_metadata_bool
+\bool_gset_true:N  \g_zigma_show_abstract_bool
+\bool_gset_true:N  \g_zigma_use_dropcap_bool
+\bool_gset_false:N \g_zigma_show_toc_bool
+\bool_gset_false:N \g_zigma_debug_colors_bool
+\bool_gset_false:N \g_zigma_debug_bool
+\bool_gset_false:N \g_zigma_validate_bool  % Default: no validation (performance)
+
+%% ============================================================================
+%% Helper Functions
+%% ============================================================================
+
+% Store key-value in prop
+\cs_new_protected:Npn \zigma_prop_put:nn #1 #2 {
+  \prop_gput:Nnn \g_zigma_setup_prop {#1} {#2}
+}
+
+% Apply value from prop to state variable if present (value in \l_tmpa_tl)
+\cs_new_protected:Npn \zigma_apply_if_present:nn #1 #2 {
+  \prop_get:NnNT \g_zigma_setup_prop {#1} \l_tmpa_tl
+    { #2 }
+}
+
+%% ============================================================================
+%% Logging Functions (native expl3 messaging)
+%% ============================================================================
+
+\msg_new:nnn { zigma } { state-line } { #1~=~#2 }
+
+\msg_new:nnnn { zigma } { template-not-found }
+  { Template~'#1'~not~found }
+  { 
+    Available~templates:~#2.\\
+    #3
+  }
+
+\cs_new_protected:Npn \zigma_log_state: {
+  \zigma_log:n { ===== ~ ZIGMA ~ STATE ~ DUMP ~ BEGIN ~ ===== }
+  \zigma_log:x { margin.left    = \skip_use:N \g_zigma_margin_left_skip }
+  \zigma_log:x { margin.right   = \skip_use:N \g_zigma_margin_right_skip }
+  \zigma_log:x { margin.top     = \skip_use:N \g_zigma_margin_top_skip }
+  \zigma_log:x { margin.bottom  = \skip_use:N \g_zigma_margin_bottom_skip }
+  \zigma_log:x { column.sep     = \dim_use:N \g_zigma_column_sep_dim }
+  \zigma_log:x { header.left    = \tl_use:N \g_zigma_header_left_tl }
+  \zigma_log:x { header.center  = \tl_use:N \g_zigma_header_center_tl }
+  \zigma_log:x { header.right   = \tl_use:N \g_zigma_header_right_tl }
+  \zigma_log:x { footer.left    = \tl_use:N \g_zigma_footer_left_tl }
+  \zigma_log:x { footer.center  = \tl_use:N \g_zigma_footer_center_tl }
+  \zigma_log:x { footer.right   = \tl_use:N \g_zigma_footer_right_tl }
+  \zigma_log:x { footer.total   = \tl_use:N \g_zigma_footer_total_tl }
+  \zigma_log:x { font.engine    = \tl_use:N \g_zigma_font_engine_tl }
+  \zigma_log:x { fonts.serif    = \tl_use:N \g_zigma_font_serif_tl }
+  \zigma_log:x { fonts.sans     = \tl_use:N \g_zigma_font_sans_tl }
+  \zigma_log:x { fonts.mono     = \tl_use:N \g_zigma_font_mono_tl }
+  \zigma_log:x { color.main     = \tl_use:N \g_zigma_color_main_tl }
+  \zigma_log:x { color.section  = \tl_use:N \g_zigma_color_section_tl }
+  \zigma_log:x { color.accent   = \tl_use:N \g_zigma_color_accent_tl }
+  \zigma_log:x { color.box.bg   = \tl_use:N \g_zigma_color_box_bg_tl }
+  \zigma_log:x { color.box.line = \tl_use:N \g_zigma_color_box_line_tl }
+  \zigma_log:x { journal.name   = \tl_use:N \g_zigma_journal_name_tl }
+  \zigma_log:x { journal.url    = \tl_use:N \g_zigma_journal_url_tl }
+  \zigma_log:x { show.metadata  = \bool_if:NTF \g_zigma_show_metadata_bool {true}{false} }
+  \zigma_log:x { show.abstract  = \bool_if:NTF \g_zigma_show_abstract_bool {true}{false} }
+  \zigma_log:x { use.dropcap    = \bool_if:NTF \g_zigma_use_dropcap_bool {true}{false} }
+  \zigma_log:x { show.toc       = \bool_if:NTF \g_zigma_show_toc_bool {true}{false} }
+  \zigma_log:x { debug.colors   = \bool_if:NTF \g_zigma_debug_colors_bool {true}{false} }
+  \zigma_log:n { ===== ~ ZIGMA ~ STATE ~ DUMP ~ END ~ ===== }
+}
+
+%% --------------------------------------------------------------------------
+%% Extend soft state dump with metadata
+\cs_undefine:N \zigma_log_state_soft:
+\cs_new_protected:Npn \zigma_log_state_soft:
+  {
+    \zigma_log:n { ===== ZIGMA STATE DUMP (soft) ===== }
+    \zigma_log:x { margin.left    = \skip_use:N \g_zigma_margin_left_skip }
+    \zigma_log:x { margin.right   = \skip_use:N \g_zigma_margin_right_skip }
+    \zigma_log:x { margin.top     = \skip_use:N \g_zigma_margin_top_skip }
+    \zigma_log:x { margin.bottom  = \skip_use:N \g_zigma_margin_bottom_skip }
+    \zigma_log:x { column.sep     = \dim_use:N  \g_zigma_column_sep_dim }
+    \zigma_log:x { font.engine    = \tl_use:N   \g_zigma_font_engine_tl }
+    \zigma_log:x { fonts.serif    = \tl_use:N   \g_zigma_font_serif_tl }
+    \zigma_log:x { fonts.sans     = \tl_use:N   \g_zigma_font_sans_tl }
+    \zigma_log:x { fonts.mono     = \tl_use:N   \g_zigma_font_mono_tl }
+    \zigma_log:x { journal.name   = \tl_use:N   \g_zigma_journal_name_tl }
+    \zigma_log:x { journal.url    = \tl_use:N   \g_zigma_journal_url_tl }
+    \zigma_log:x { show.metadata  = \bool_if:NTF \g_zigma_show_metadata_bool {true}{false} }
+    \zigma_log:x { show.abstract  = \bool_if:NTF \g_zigma_show_abstract_bool {true}{false} }
+    \zigma_log:x { use.dropcap    = \bool_if:NTF \g_zigma_use_dropcap_bool {true}{false} }
+    \zigma_log:x { show.toc       = \bool_if:NTF \g_zigma_show_toc_bool {true}{false} }
+    \zigma_log:x { debug.colors   = \bool_if:NTF \g_zigma_debug_colors_bool {true}{false} }
+    % metadata (selected)
+    \zigma_log:x { metadata.corresponding = \tl_use:N \g_zigma_meta_corresponding_tl }
+    \zigma_log:x { metadata.email         = \tl_use:N \g_zigma_meta_email_tl }
+    \zigma_log:x { metadata.received      = \tl_use:N \g_zigma_meta_received_tl }
+    \zigma_log:x { metadata.revised       = \tl_use:N \g_zigma_meta_revised_tl }
+    \zigma_log:x { metadata.accepted      = \tl_use:N \g_zigma_meta_accepted_tl }
+    \zigma_log:x { metadata.published     = \tl_use:N \g_zigma_meta_published_tl }
+    \zigma_log:x { metadata.doi           = \tl_use:N \g_zigma_meta_doi_tl }
+    \zigma_log:x { metadata.uuid          = \tl_use:N \g_zigma_meta_uuid_tl }
+    \zigma_log:x { metadata.license       = \tl_use:N \g_zigma_meta_license_tl }
+    \zigma_log:x { metadata.keywords      = \tl_use:N \g_zigma_meta_keywords_tl }
+    \zigma_log:x { metadata.url           = \tl_use:N \g_zigma_meta_url_tl }
+    \zigma_log:x { metadata.url.show      = \tl_use:N \g_zigma_meta_url_show_tl }
+    \zigma_log:n { ===== END ZIGMA STATE DUMP ===== }
+  }
+
+
+%% ============================================================================
+%% State Variables - Corresponding Author Settings
+%% ============================================================================
+
+\tl_new:N \g_zigma_corresponding_marker_tl
+\bool_new:N \g_zigma_corresponding_footer_bool
+
+% Default values
+\tl_gset:Nn \g_zigma_corresponding_marker_tl { envelope }
+\bool_gset_true:N \g_zigma_corresponding_footer_bool
+
+\ExplSyntaxOff

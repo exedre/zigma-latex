@@ -1,0 +1,498 @@
+%% ============================================================================
+%% Zigma Keys - l3keys Configuration System (expl3)
+%% ============================================================================
+%%
+%% This module provides the user-facing interface for Zigma configuration
+%% via the \zigmasetup{...} command. It uses L3's powerful l3keys system
+%% to map user-friendly key-value pairs to internal state variables.
+%%
+%% KEY PROCESSING ARCHITECTURE:
+%%
+%% 1. DIRECT KEYS - Predefined keys with typed setters
+%%    Example: title = My Title → \tl_gset:Nn \g_zigma_title_tl {My Title}
+%%
+%% 2. UNKNOWN KEY DISPATCHER - Handles dynamic patterns
+%%    Example: authors.0.name = Einstein → regex match → author system
+%%
+%% INTEGRATION:
+%%   - Reads configuration from zigma-core.code.tex (state variables)
+%%   - Routes author/affiliation keys to zigma-authors.code.tex
+%%   - Processes keys at class load time and via \zigmasetup command
+%%
+%% DEBUG MODE:
+%%   Set debug = true to see all key processing and state dumps
+%%
+\ExplSyntaxOn
+
+%% ============================================================================
+%% Scratch Variables for Key Routing
+%% ============================================================================
+%% These local variables are used to parse and route dynamic keys
+%% (like authors.N.field) to the appropriate handlers.
+
+\tl_new:N \l_auth_tl          % Stores author ID from regex extraction
+\tl_new:N \l_prop_tl          % Stores property name from regex extraction
+\tl_new:N \l_affil_tl         % Stores affiliation ID from regex extraction
+\seq_new:N \l_auth_seq        % Temporary sequence for regex captures
+\seq_new:N \l_affil_seq       % Temporary sequence for regex captures
+\tl_new:N \l_author_handle_tl % Handle for current author being processed
+
+%% ============================================================================
+%% Error Messages
+%% ============================================================================
+
+\msg_new:nnn { zigma } { unknown-key }
+  { Unknown~key~'#1'~in~zigma/setup. }
+
+%% ============================================================================
+%% Unknown Key Dispatcher
+%% ============================================================================
+%% This function is called for any key that doesn't match a direct key definition.
+%% It uses regex patterns to route keys to specialized handlers:
+%%   - authors.N.field → author management system
+%%   - affiliations.N → affiliation storage
+%%   - everything else → warning message
+
+\str_new:N \l__zigma_key_str
+
+%% \zigma_setup_unknown_dispatch:nn {<key>} {<value>}
+%%
+%% Arguments:
+%%   #1 - Full key path (e.g., "authors.2.name")
+%%   #2 - Value to assign
+%%
+%% Pattern matching:
+%%   authors\.(\d+)\.([a-zA-Z]+)  → Extract ID and property name
+%%   affiliations\.(\d+)           → Extract affiliation ID
+%%
+\cs_new_protected:Npn \zigma_setup_unknown_dispatch:nn #1#2
+  {
+    % Debug output (only if debug mode enabled)
+    \bool_if:NT \g_zigma_debug_bool { \iow_term:x { ZIGMA~INPUT~KEY:~#1~~VAL:~#2 } }
+    
+    % Try to match authors.N.field pattern
+    % authors.N.field
+    \regex_match:nVTF {(?i)\bauthors\.(\d+)\.([a-zA-Z]+)\b} {#1}
+      {
+            \regex_extract_once:nVN {(?i)\bauthors\.(\d+)\.([a-zA-Z]+)\b} {#1} \l_auth_seq
+            \seq_pop_right:NN \l_auth_seq  \l_prop_tl
+            \seq_pop_right:NN \l_auth_seq  \l_auth_tl
+            \bool_if:NT \g_zigma_debug_bool {
+              \iow_term:x {
+                ZIGMA~GOT~KEY:~\tl_use:N\l_auth_tl~~PROP:~\tl_use:N\l_prop_tl~~VAL:~#2
+              }
+            }
+            \exp_args:NV \zigma_author_create:nN \l_auth_tl \l_author_handle_tl
+            \exp_args:NnV \zigma_author_set_property_handle:Nnn \l_author_handle_tl \l_prop_tl {#2}
+      }
+      {
+        % affiliations.N
+        \regex_match:nVTF {(?i)\baffiliations\.(\d+)\b} {#1}
+          {
+            \regex_extract_once:nVN {(?i)\baffiliations\.(\d+)\b} {#1} \l_affil_seq
+            \seq_pop_right:NN \l_affil_seq  \l_affil_tl
+            \zigma_affiliation_set:Vn \l_affil_tl {#2}
+            \bool_if:NT \g_zigma_debug_bool { \iow_term:x { ZIGMA~GOT~KEY:~\tl_use:N\l_affil_tl~~VAL:~#2 } }
+          }
+          {
+               % Other keys: non-blocking warning
+               \msg_warning:nnx { zigma } { unknown-key } {#1}
+          }
+       } 
+  }
+
+% Connect dispatcher to unknown handler of main family
+\keys_define:nn { zigma / setup } {
+  % Unknown key handler (authors.N.*, affiliations.N)
+  unknown .code:n = { \zigma_setup_unknown_dispatch:nn { \l_keys_key_str } {#1} },
+
+  % Page counter
+  page.start    .int_set:N = \c@page,
+  page.start    .initial:n = 1,
+
+  % Headers
+  header.left   .tl_set:N = \g_zigma_header_left_tl,
+  header.center .tl_set:N = \g_zigma_header_center_tl,
+  header.right  .tl_set:N = \g_zigma_header_right_tl,
+
+  % Footers
+  footer.left        .tl_set:N = \g_zigma_footer_left_tl,
+  footer.center      .tl_set:N = \g_zigma_footer_center_tl,
+  footer.right       .tl_set:N = \g_zigma_footer_right_tl,
+  footer.page.total  .tl_set:N = \g_zigma_footer_total_tl,
+
+  % Fonts
+  font.engine .tl_set:N = \g_zigma_font_engine_tl,
+  fonts.serif .tl_set:N = \g_zigma_font_serif_tl,
+  fonts.sans  .tl_set:N = \g_zigma_font_sans_tl,
+  fonts.mono  .tl_set:N = \g_zigma_font_mono_tl,
+
+  % Colors (names)
+  color.main      .tl_set:N = \g_zigma_color_main_tl,
+  color.section   .tl_set:N = \g_zigma_color_section_tl,
+  color.accent    .tl_set:N = \g_zigma_color_accent_tl,
+  color.box.bg    .tl_set:N = \g_zigma_color_box_bg_tl,
+  color.box.line  .tl_set:N = \g_zigma_color_box_line_tl,
+  % rgb/name placeholders retained
+  color.main.rgb  .code:n = { \zigma_prop_put:nn {color.main.rgb}{#1} },
+  color.main.name .code:n = { \zigma_prop_put:nn {color.main.name}{#1} },
+
+  % Journal
+  journal.name     .tl_set:N = \g_zigma_journal_name_tl,
+  journal.url      .tl_set:N = \g_zigma_journal_url_tl,
+  journal.url.show .tl_set:N = \g_zigma_journal_url_show_tl,
+
+  % Title
+  title            .tl_set:N = \g_zigma_title_tl,
+  subtitle         .tl_set:N = \g_zigma_subtitle_tl,
+  journalname      .tl_set:N = \g_zigma_journalname_tl,
+  date             .tl_set:N = \g_zigma_date_tl,
+  date.show        .bool_gset:N = \g_zigma_date_show_bool,
+  abstract         .tl_set:N = \g_zigma_abstract_tl,
+  keywords         .tl_set:N = \g_zigma_keywords_tl,
+  title.url        .tl_set:N = \g_zigma_title_url_tl,
+  title.url.show   .tl_set:N = \g_zigma_title_url_show_tl,
+  small.title      .tl_set:N = \g_zigma_small_title_tl,
+  leadauthor       .tl_set:N = \g_zigma_leadauthor_tl,
+  institution      .tl_set:N = \g_zigma_institution_tl,
+  day              .tl_set:N = \g_zigma_day_tl,
+  dates            .tl_set:N = \g_zigma_dates_tl,
+
+  % Metadata
+  metadata.corresponding .tl_set:N = \g_zigma_meta_corresponding_tl,
+  metadata.email         .tl_set:N = \g_zigma_meta_email_tl,
+  metadata.received      .tl_set:N = \g_zigma_meta_received_tl,
+  metadata.revised       .tl_set:N = \g_zigma_meta_revised_tl,
+  metadata.accepted      .tl_set:N = \g_zigma_meta_accepted_tl,
+  metadata.published     .tl_set:N = \g_zigma_meta_published_tl,
+  metadata.doi           .tl_set:N = \g_zigma_meta_doi_tl,
+  metadata.uuid          .tl_set:N = \g_zigma_meta_uuid_tl,
+  metadata.license       .tl_set:N = \g_zigma_meta_license_tl,
+  metadata.keywords      .tl_set:N = \g_zigma_meta_keywords_tl,
+  metadata.url           .tl_set:N = \g_zigma_meta_url_tl,
+  metadata.url.show      .tl_set:N = \g_zigma_meta_url_show_tl,
+
+  % Labels
+  labels.keyword     .tl_set:N = \g_zigma_label_keyword_tl,
+  labels.abstract    .tl_set:N = \g_zigma_label_abstract_tl,
+  labels.information .tl_set:N = \g_zigma_label_information_tl,
+  labels.note        .tl_set:N = \g_zigma_label_note_tl,
+
+  % Toggles
+  show.metadata      .bool_set:N = \g_zigma_show_metadata_bool,
+  show.metadata      .initial:n  = false,
+  show.abstract.box  .bool_set:N = \g_zigma_show_abstract_bool,
+  show.abstract.box  .initial:n  = true,
+  use.dropcap        .bool_set:N = \g_zigma_use_dropcap_bool,
+  use.dropcap        .initial:n  = true,
+  show.toc           .bool_set:N = \g_zigma_show_toc_bool,
+  show.toc           .initial:n  = false,
+  debug.colors       .bool_set:N = \g_zigma_debug_colors_bool,
+  debug.colors       .initial:n  = false,
+  debug              .bool_set:N = \g_zigma_debug_bool,
+  debug              .initial:n  = false,
+  validate           .bool_set:N = \g_zigma_validate_bool,
+  validate           .initial:n  = false,
+}
+
+
+%% ============================================================================
+%% Public Command: \zigmasetup
+%% ============================================================================
+
+\NewDocumentCommand{\zigmasetup}{m}{
+  \keys_set:nn { zigma / setup } {#1}
+  \zigma_apply_setup:  % Run post-processing steps
+}
+
+%% ============================================================================
+%% Copy Configuration to State Variables
+%% ============================================================================
+
+\cs_new_protected:Npn \zigma_copy_prop_to_state: {
+  % Margins (copy to skip registers)
+  % Headers
+  \zigma_apply_if_present:nn {header.left}
+    { \tl_gset:NV \g_zigma_header_left_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {header.center}
+    { \tl_gset:NV \g_zigma_header_center_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {header.right}
+    { \tl_gset:NV \g_zigma_header_right_tl \l_tmpa_tl }
+  
+  % Footers
+  \zigma_apply_if_present:nn {footer.left}
+    { \tl_gset:NV \g_zigma_footer_left_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {footer.center}
+    { \tl_gset:NV \g_zigma_footer_center_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {footer.right}
+    { \tl_gset:NV \g_zigma_footer_right_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {footer.page.total}
+    { \tl_gset:NV \g_zigma_footer_total_tl \l_tmpa_tl }
+  
+  % Fonts
+  \zigma_apply_if_present:nn {font.engine}
+    { \tl_gset:NV \g_zigma_font_engine_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {fonts.serif}
+    { \tl_gset:NV \g_zigma_font_serif_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {fonts.sans}
+    { \tl_gset:NV \g_zigma_font_sans_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {fonts.mono}
+    { \tl_gset:NV \g_zigma_font_mono_tl \l_tmpa_tl }
+  
+  % Colors (just store names for now)
+  \zigma_apply_if_present:nn {color.main}
+    { \tl_gset:NV \g_zigma_color_main_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {color.section}
+    { \tl_gset:NV \g_zigma_color_section_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {color.accent}
+    { \tl_gset:NV \g_zigma_color_accent_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {color.box.bg}
+    { \tl_gset:NV \g_zigma_color_box_bg_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {color.box.line}
+    { \tl_gset:NV \g_zigma_color_box_line_tl \l_tmpa_tl }
+  
+  % Journal
+  \zigma_apply_if_present:nn {journal.name}
+    { \tl_gset:NV \g_zigma_journal_name_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {journal.url}
+    { \tl_gset:NV \g_zigma_journal_url_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {journal.url.show}
+    { \tl_gset:NV \g_zigma_journal_url_show_tl \l_tmpa_tl }
+  
+  % Title
+  \zigma_apply_if_present:nn {title.url}
+    { \tl_gset:NV \g_zigma_title_url_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {title.url.show}
+    { \tl_gset:NV \g_zigma_title_url_show_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {small.title}
+    { \tl_gset:NV \g_zigma_small_title_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {institution}
+    { \tl_gset:NV \g_zigma_institution_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {day}
+    { \tl_gset:NV \g_zigma_day_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {dates}
+    { \tl_gset:NV \g_zigma_dates_tl \l_tmpa_tl }
+  
+  % Metadata
+  \zigma_apply_if_present:nn {metadata.corresponding}
+    { \tl_gset:NV \g_zigma_meta_corresponding_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.email}
+    { \tl_gset:NV \g_zigma_meta_email_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.received}
+    { \tl_gset:NV \g_zigma_meta_received_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.revised}
+    { \tl_gset:NV \g_zigma_meta_revised_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.accepted}
+    { \tl_gset:NV \g_zigma_meta_accepted_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.published}
+    { \tl_gset:NV \g_zigma_meta_published_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.doi}
+    { \tl_gset:NV \g_zigma_meta_doi_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.uuid}
+    { \tl_gset:NV \g_zigma_meta_uuid_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.license}
+    { \tl_gset:NV \g_zigma_meta_license_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.keywords}
+    { \tl_gset:NV \g_zigma_meta_keywords_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.url}
+    { \tl_gset:NV \g_zigma_meta_url_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.url.show}
+    { \tl_gset:NV \g_zigma_meta_url_show_tl \l_tmpa_tl }
+  
+  % Labels
+  \zigma_apply_if_present:nn {labels.keyword}
+    { \tl_gset:NV \g_zigma_label_keyword_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {labels.abstract}
+    { \tl_gset:NV \g_zigma_label_abstract_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {labels.information}
+    { \tl_gset:NV \g_zigma_label_information_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {labels.note}
+    { \tl_gset:NV \g_zigma_label_note_tl \l_tmpa_tl }
+  
+  % Toggles: already set directly by l3keys, no copy needed
+  % page.start: already set directly by l3keys to \c@page
+}
+
+%% ============================================================================
+%% Author-Affiliation Validation
+%% ============================================================================
+
+% Declare temporary token lists for validation
+\tl_new:N \l__zigma_affil_check_id_tl
+\tl_new:N \l__zigma_affil_check_name_tl  
+\tl_new:N \l__zigma_author_check_name_tl
+\tl_new:N \l__zigma_author_check_affils_tl
+\int_new:N \l__zigma_affil_idx_int
+
+%% \zigma_validate_author_affils:
+%%
+%% Validate that all author affiliation references point to defined affiliations.
+%% Uses a simple token list split approach to avoid nested sequences.
+%%
+\cs_new_protected:Npn \zigma_validate_author_affils:
+  {
+    % Iterate through all registered author IDs
+    \seq_map_inline:Nn \g_zigma_author_ids_seq
+      {
+        % Get author's affiliation list
+        \prop_get:cnN { \zigma_author_name_from_id:n {##1} } { affiliation } \l__zigma_author_check_affils_tl
+        
+        % Check if affiliation property exists
+        \quark_if_no_value:NF \l__zigma_author_check_affils_tl
+          {
+            % Get author name for messages
+            \prop_get:cnN { \zigma_author_name_from_id:n {##1} } { name } \l__zigma_author_check_name_tl
+            
+            % Process each comma-separated affiliation ID
+            \clist_map_inline:Nn \l__zigma_author_check_affils_tl
+              {
+                % Trim and check
+                \tl_set:Nn \l__zigma_affil_check_id_tl { ####1 }
+                \tl_trim_spaces:N \l__zigma_affil_check_id_tl
+                
+                % Check if ID exists
+                \prop_get:NVN \g_zigma_affil_prop \l__zigma_affil_check_id_tl \l__zigma_affil_check_name_tl
+                
+                \quark_if_no_value:NT \l__zigma_affil_check_name_tl
+                  {
+                    % Issue warning and log
+                    \msg_warning:nnxxx { zigma } { invalid-affiliation }
+                      {##1}
+                      { \tl_use:N \l__zigma_author_check_name_tl }
+                      { \tl_use:N \l__zigma_affil_check_id_tl }
+                    % Also log to terminal for visibility
+                    \zigma_log:n { [VALIDATION~WARNING]~Author~##1~references~non-existent~affiliation~ID:~\tl_use:N\l__zigma_affil_check_id_tl }
+                  }
+              }
+          }
+      }
+  }
+
+% Define the warning message
+\msg_new:nnn { zigma } { invalid-affiliation }
+  {
+    ZIGMA~WARNING:~Author~#1~(#2)~references~non-existent~affiliation~ID:~#3
+  }
+
+%% ============================================================================
+%% Setup Application Orchestrator
+%% ============================================================================
+%% This function is called after all keys have been processed to finalize
+%% the configuration and optionally display debug information.
+
+\cs_generate_variant:Nn \zigma_parse_affiliations:n { V }
+\cs_generate_variant:Nn \zigma_parse_authors:n      { V }
+\cs_generate_variant:Nn \prop_get:NnN { NV }
+
+%% \zigma_apply_setup:
+%%
+%% Main orchestrator that runs after \zigmasetup{...} processes all keys.
+%% 
+%% Steps:
+%%   1. Copy configuration property list to state variables
+%%   2. (Optional) Parse nested author/affiliation lists - currently disabled
+%%   3. Validate author-affiliation relationships
+%%   4. Display state dump if debug = true
+%%   5. Display authors list if debug = true
+%%
+%% This function is automatically called at \begin{document} by the class.
+%%
+\cs_new_protected:Npn \zigma_apply_setup:
+  {
+    % Step 1: Copy all configuration to state variables
+    \zigma_copy_prop_to_state:
+
+    % Step 1.5: Apply template defaults (if template was loaded)
+    % Templates can set defaults for values not specified by user
+    \cs_if_exist:NT \zigma_template_postsetup:
+      {
+        \zigma_log:n { [ZIGMASETUP]~Applying~template~defaults }
+        \zigma_template_postsetup:
+      }
+
+    % Step 2: Parse nested lists (if present) - CURRENTLY DISABLED
+    % Future: This would handle authors = { {name=..., email=...}, {...} } syntax
+    %\zigma_finalize_authors: 
+
+    % Step 3: Validate author-affiliation relationships (only if requested)
+    % Validation is disabled by default for performance
+    % Enable with: validate=true or debug=true
+    \bool_lazy_or:nnT { \g_zigma_validate_bool } { \g_zigma_debug_bool }
+      {
+        \zigma_log:n { [ZIGMASETUP]~Running~affiliation~validation }
+        \zigma_validate_author_affils:
+      }
+
+    % Step 4: Display configuration state (debug mode only)
+    \bool_if:NT \g_zigma_debug_bool { \zigma_log_state_soft: }
+    
+    % Step 5: Display registered authors (debug mode only)
+    \bool_if:NT \g_zigma_debug_bool { \zigma_authors_show: }
+
+  }
+
+% Note: \zigma_log_state_soft: is defined in zigma-core.code.tex
+
+
+%% Corresponding author configuration keys
+\keys_define:nn { zigma/setup }
+  {
+    corresponding.marker .tl_gset:N = \g_zigma_corresponding_marker_tl,
+    corresponding.show-footer .bool_gset:N = \g_zigma_corresponding_footer_bool,
+  }
+
+%% Rho-specific configuration keys
+\keys_define:nn { zigma/setup }
+  {
+    doi .tl_gset:N = \g_zigma_doi_tl,
+    received .tl_gset:N = \g_zigma_received_tl,
+    revised .tl_gset:N = \g_zigma_revised_tl,
+    accepted .tl_gset:N = \g_zigma_accepted_tl,
+    published .tl_gset:N = \g_zigma_published_tl,
+    license .tl_gset:N = \g_zigma_license_tl,
+    institution .tl_gset:N = \g_zigma_institution_tl,
+    
+    % Bibliography configuration
+    bib.backend .tl_gset:N = \g_zigma_bib_backend_tl,
+    bib.style .tl_gset:N = \g_zigma_bib_style_tl,
+    bib.file .tl_gset:N = \g_zigma_bib_file_tl,
+    bib.preset .tl_gset:N = \g_zigma_bib_preset_tl,
+    bib.enable .bool_gset:N = \g_zigma_bib_enable_bool,
+    bib.sorting .bool_gset:N = \g_zigma_bib_sorting_bool,
+  }
+
+%% Cross-reference label customization
+\keys_define:nn { zigma/setup }
+  {
+    % Singular forms
+    labels.section .tl_gset:N = \g_zigma_label_section_tl,
+    labels.chapter .tl_gset:N = \g_zigma_label_chapter_tl,
+    labels.figure .tl_gset:N = \g_zigma_label_figure_tl,
+    labels.table .tl_gset:N = \g_zigma_label_table_tl,
+    labels.equation .tl_gset:N = \g_zigma_label_equation_tl,
+    labels.listing .tl_gset:N = \g_zigma_label_listing_tl,
+    labels.algorithm .tl_gset:N = \g_zigma_label_algorithm_tl,
+    labels.theorem .tl_gset:N = \g_zigma_label_theorem_tl,
+    labels.lemma .tl_gset:N = \g_zigma_label_lemma_tl,
+    labels.definition .tl_gset:N = \g_zigma_label_definition_tl,
+    labels.appendix .tl_gset:N = \g_zigma_label_appendix_tl,
+    labels.ref .tl_gset:N = \g_zigma_label_ref_tl,
+    
+    % Plural forms
+    labels.sections .tl_gset:N = \g_zigma_label_sections_tl,
+    labels.chapters .tl_gset:N = \g_zigma_label_chapters_tl,
+    labels.figures .tl_gset:N = \g_zigma_label_figures_tl,
+    labels.tables .tl_gset:N = \g_zigma_label_tables_tl,
+    labels.equations .tl_gset:N = \g_zigma_label_equations_tl,
+    labels.listings .tl_gset:N = \g_zigma_label_listings_tl,
+    labels.algorithms .tl_gset:N = \g_zigma_label_algorithms_tl,
+    labels.theorems .tl_gset:N = \g_zigma_label_theorems_tl,
+    labels.lemmas .tl_gset:N = \g_zigma_label_lemmas_tl,
+    labels.definitions .tl_gset:N = \g_zigma_label_definitions_tl,
+    labels.appendices .tl_gset:N = \g_zigma_label_appendices_tl,
+  }
+
+\ExplSyntaxOff
+
+
+% EOF

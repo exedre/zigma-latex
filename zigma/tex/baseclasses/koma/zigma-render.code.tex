@@ -1,0 +1,459 @@
+%% Zigma LaTeX Class - KOMA-Script Plugin
+%% Rendering implementation for KOMA-Script classes (scrartcl, scrreprt, scrbook)
+
+%% ========================================================================
+%% KOMA-Script Plugin - Layout Configuration  
+%% ========================================================================
+
+% KOMA-Script uses its own typearea package for layout calculation
+% Custom margins via class options are not supported for KOMA plugin
+% Use KOMA's native configuration instead: \KOMAoptions{DIV=12}
+% This preserves KOMA's superior European typography
+
+% Column separation from class option
+\setlength{\columnsep}{\zigma@columnsep}
+
+%% ========================================================================
+%% KOMA-Script Plugin - Header/Footer Configuration
+%% ========================================================================
+
+% Use KOMA's native scrlayer-scrpage instead of fancyhdr
+\RequirePackage{scrlayer-scrpage}
+
+\ExplSyntaxOn
+
+% Configure page style AFTER ExplSyntaxOn so we can use zigma variables
+\pagestyle{scrheadings}
+
+% Configure headers using zigma variables
+\ihead{\small\itshape\tl_use:N\g_zigma_header_left_tl}
+\chead{\small\itshape\tl_use:N\g_zigma_header_center_tl}
+\ohead{\small\itshape\tl_use:N\g_zigma_header_right_tl}
+
+% Configure footers using zigma variables
+\ifoot{\small\tl_use:N\g_zigma_footer_left_tl}
+\cfoot{\small\pagemark}
+\ofoot{\small\tl_use:N\g_zigma_footer_right_tl}
+
+% No header/footer rules
+\KOMAoptions{headsepline=false,footsepline=false}
+
+%% ========================================================================
+%% KOMA-Script Plugin - Maketitle Implementation
+%% ========================================================================
+
+% This plugin provides the rendering layer for KOMA-Script classes
+% KOMA-Script is a bundle of European-style document classes
+% Key features:
+% - Superior typography (European standards)
+% - Highly configurable via \KOMAoptions
+% - Built-in support for complex layouts
+% - Better handling of fonts and spacing
+% - scrartcl: article replacement
+% - scrreprt: report replacement  
+% - scrbook: book replacement
+
+\zigma_log:n { [PLUGIN]~Loading~KOMA-Script~plugin }
+
+%% ========================================================================
+%% Maketitle Rendering
+%% ========================================================================
+
+\cs_new_protected:Npn \zigma_koma_render_title:
+  {
+    \zigma_log:n { [KOMA~PLUGIN]~Rendering~title }
+    
+    % Render title if set
+    \tl_if_empty:NF \g_zigma_title_tl
+      {
+        \begin{center}
+          % Check if title should be a hyperlink
+          \tl_if_empty:NTF \g_zigma_title_url_tl
+            {
+              {\LARGE\bfseries\sffamily \tl_use:N \g_zigma_title_tl}
+            }
+            {
+              {\LARGE\bfseries\sffamily \href{\g_zigma_title_url_tl}{\tl_use:N \g_zigma_title_tl}}
+            }
+          
+          % Render subtitle if set
+          \tl_if_empty:NF \g_zigma_subtitle_tl
+            {
+              \\[0.5em]
+              {\Large\sffamily \tl_use:N \g_zigma_subtitle_tl}
+            }
+        \end{center}
+        \vspace{1.5em}
+      }
+  }
+
+\cs_new_protected:Npn \zigma_koma_render_authors:
+  {
+    \zigma_log:n { [KOMA~PLUGIN]~Rendering~authors }
+    
+    % Get author count from sequence
+    \int_compare:nNnT { \seq_count:N \g_zigma_author_ids_seq } > { 0 }
+      {
+        \begin{center}
+          % Render author names with affiliation markers
+          \seq_map_indexed_inline:Nn \g_zigma_author_ids_seq
+            {
+              \zigma_koma_render_single_author:n { ##2 }
+              \int_compare:nNnF { ##1 } = { \seq_count:N \g_zigma_author_ids_seq }
+                { ,~ }
+            }
+        \end{center}
+        
+        % Render affiliations
+        \zigma_koma_render_affiliations:
+        
+        \vspace{1em}
+      }
+  }
+
+\cs_new_protected:Npn \zigma_koma_render_single_author:n #1
+  {
+    % Get author name using ID
+    \tl_clear:N \l_tmpa_tl
+    \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { name } \l_tmpa_tl
+    
+    \quark_if_no_value:NF \l_tmpa_tl
+      {
+        \tl_use:N \l_tmpa_tl
+        
+        % Get email and add as link with envelope symbol
+        \tl_clear:N \l__zigma_koma_email_tl
+        \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { email } \l__zigma_koma_email_tl
+        
+        \quark_if_no_value:NF \l__zigma_koma_email_tl
+          {
+            \tl_if_empty:NF \l__zigma_koma_email_tl
+              {
+                \textsuperscript{
+                  \href{mailto:\tl_use:N\l__zigma_koma_email_tl}{\tiny\Letter}
+                }
+              }
+          }
+        
+        % Get ORCID and add as link with icon
+        \tl_clear:N \l__zigma_koma_orcid_tl
+        \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { orcid } \l__zigma_koma_orcid_tl
+        
+        \quark_if_no_value:NF \l__zigma_koma_orcid_tl
+          {
+            \tl_if_empty:NF \l__zigma_koma_orcid_tl
+              {
+                \textsuperscript{
+                  \href{https://orcid.org/\tl_use:N\l__zigma_koma_orcid_tl}{\tiny\aiOrcid}
+                }
+              }
+          }
+        
+        % Add corresponding marker if set (BEFORE affiliations)
+        \tl_clear:N \l__zigma_koma_corr_tl
+        \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { corresponding } \l__zigma_koma_corr_tl
+        
+        \quark_if_no_value:NF \l__zigma_koma_corr_tl
+          {
+            \str_if_eq:VnT \l__zigma_koma_corr_tl { true }
+              {
+                \textsuperscript{
+                  \str_case:Vn \g_zigma_corresponding_marker_tl
+                    {
+                      { envelope } { \Letter }
+                      { star } { \ensuremath{\star} }
+                      { asterisk } { * }
+                    }
+                }
+              }
+          }
+        
+        % Get affiliation list and add superscript markers
+        \tl_clear:N \l_tmpb_tl
+        \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_#1 } { affiliation } \l_tmpb_tl
+        
+        \quark_if_no_value:NF \l_tmpb_tl
+          {
+            % Process comma-separated affiliation IDs
+            \tl_if_empty:NF \l_tmpb_tl
+              {
+                \textsuperscript{
+                  \clist_set:NV \l__zigma_koma_affil_clist \l_tmpb_tl
+                  \clist_map_inline:Nn \l__zigma_koma_affil_clist
+                    {
+                      \zigma_affil_symbol:n { ##1 }
+                    }
+                }
+              }
+          }
+      }
+  }
+
+\tl_new:N \l__zigma_koma_email_tl
+\tl_new:N \l__zigma_koma_orcid_tl
+\tl_new:N \l__zigma_koma_corr_tl
+\clist_new:N \l__zigma_koma_affil_clist
+
+% Helper to convert affiliation ID to symbol (reuse from article)
+\cs_new:Npn \zigma_affil_symbol:n #1
+  {
+    \int_case:nnF { #1 }
+      {
+        { 0 } { \ensuremath{\dagger} }
+        { 1 } { \ensuremath{\ddagger} }
+        { 2 } { \ensuremath{\S} }
+        { 3 } { \ensuremath{\P} }
+        { 4 } { \ensuremath{\|} }
+        { 5 } { \ensuremath{**} }
+      }
+      { \ensuremath{#1} } % fallback to number
+  }
+
+\cs_new_protected:Npn \zigma_koma_render_affiliations:
+  {
+    % Iterate through registered affiliations using prop_map
+    \prop_map_inline:Nn \g_zigma_affil_prop
+      {
+        \par
+        \noindent
+        \textsuperscript{ \zigma_affil_symbol:n { ##1 } }
+        {\small ##2}
+      }
+  }
+
+\cs_new_protected:Npn \zigma_koma_render_date:
+  {
+    % Render date only if date.show is true
+    \bool_if:NT \g_zigma_date_show_bool
+      {
+        \tl_if_empty:NF \g_zigma_date_tl
+          {
+            \begin{center}
+              \tl_use:N \g_zigma_date_tl
+            \end{center}
+            \vspace{1em}
+          }
+      }
+  }
+
+\cs_new_protected:Npn \zigma_koma_render_abstract:
+  {
+    % Render abstract if set
+    \tl_if_empty:NF \g_zigma_abstract_tl
+      {
+        \begin{center}
+          \textbf{\sffamily Abstract}
+        \end{center}
+        {\small \g_zigma_abstract_tl}
+        \par\vskip 1em
+      }
+  }
+
+\cs_new_protected:Npn \zigma_koma_render_keywords:
+        \zigma_koma_render_metadata_footer:
+  {
+    % Render keywords if set
+    \tl_if_empty:NF \g_zigma_keywords_tl
+      {
+        \par
+        \vspace{0.5em}
+        \noindent
+        {\small\textbf{\sffamily Keywords:}~\tl_use:N \g_zigma_keywords_tl}
+        \par
+        \vspace{1.5em}
+      }
+  }
+
+\cs_new_protected:Npn \zigma_koma_render_metadata_footer:
+  {
+    % Count metadata items
+    \int_zero:N \l_tmpa_int
+    \tl_if_empty:NF \g_zigma_meta_doi_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_url_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_received_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_revised_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_accepted_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_published_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_license_tl { \int_incr:N \l_tmpa_int }
+    
+    \int_compare:nNnT { \l_tmpa_int } > { 0 }
+      {
+        \par
+        \vspace{1em}
+        \noindent
+        \hrulefill
+        \par
+        \vspace{0.8em}
+        
+        % DOI
+        \tl_if_empty:NF \g_zigma_meta_doi_tl
+          {
+            \noindent
+            {\small\bfseries\sffamily DOI:}~
+            {\small\href{https://doi.org/\g_zigma_meta_doi_tl}{\g_zigma_meta_doi_tl}}
+            \par
+          }
+        
+        % URL
+        \tl_if_empty:NF \g_zigma_meta_url_tl
+          {
+            \noindent
+            {\small\bfseries\sffamily URL:}~
+            \tl_if_empty:NTF \g_zigma_meta_url_show_tl
+              { {\small\href{\g_zigma_meta_url_tl}{\g_zigma_meta_url_tl}} }
+              { {\small\href{\g_zigma_meta_url_tl}{\g_zigma_meta_url_show_tl}} }
+            \par
+          }
+        
+        % Dates (compact European style)
+        \tl_if_empty:NF \g_zigma_meta_received_tl
+          {
+            \noindent
+            {\small\bfseries\sffamily Received:}~{\small\g_zigma_meta_received_tl}\hspace{1em}
+          }
+        \tl_if_empty:NF \g_zigma_meta_revised_tl
+          {
+            {\small\bfseries\sffamily Revised:}~{\small\g_zigma_meta_revised_tl}\hspace{1em}
+          }
+        \tl_if_empty:NF \g_zigma_meta_accepted_tl
+          {
+            {\small\bfseries\sffamily Accepted:}~{\small\g_zigma_meta_accepted_tl}
+          }
+        \tl_if_empty:NF \g_zigma_meta_received_tl { \par }
+        
+        % Published
+        \tl_if_empty:NF \g_zigma_meta_published_tl
+          {
+            \noindent
+            {\small\bfseries\sffamily Published:}~{\small\g_zigma_meta_published_tl}
+            \par
+          }
+        
+        % License
+        \tl_if_empty:NF \g_zigma_meta_license_tl
+          {
+            \vspace{0.5em}
+            \noindent
+            {\small\g_zigma_meta_license_tl}
+            \par
+          }
+        
+        \vspace{0.8em}
+        \noindent
+        \hrulefill
+        \par
+        \vspace{1em}
+      }
+  }
+
+%% ========================================================================
+%% Corresponding Author Footer
+%% ========================================================================
+
+\cs_new_protected:Npn \zigma_koma_render_corresponding_footer:
+  {
+    \bool_if:NT \g_zigma_corresponding_footer_bool
+      {
+        % Collect corresponding authors
+        \tl_clear:N \l__zigma_koma_corr_list_tl
+        \int_zero:N \l__zigma_koma_corr_count_int
+        
+        \seq_map_inline:Nn \g_zigma_author_ids_seq
+          {
+            \tl_clear:N \l__zigma_koma_tmp_corr_tl
+            \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_##1 } { corresponding } \l__zigma_koma_tmp_corr_tl
+            
+            \quark_if_no_value:NF \l__zigma_koma_tmp_corr_tl
+              {
+                \str_if_eq:VnT \l__zigma_koma_tmp_corr_tl { true }
+                  {
+                    \int_incr:N \l__zigma_koma_corr_count_int
+                    
+                    % Get email
+                    \tl_clear:N \l__zigma_koma_tmp_email_tl
+                    \exp_args:Nc \prop_get:NnN { g_zigma_author_prop_##1 } { email } \l__zigma_koma_tmp_email_tl
+                    
+                    \quark_if_no_value:NF \l__zigma_koma_tmp_email_tl
+                      {
+                        \tl_if_empty:NF \l__zigma_koma_tmp_email_tl
+                          {
+                            \int_compare:nNnTF { \l__zigma_koma_corr_count_int } > { 1 }
+                              {
+                                \tl_put_right:Nn \l__zigma_koma_corr_list_tl { ,~ }
+                              }
+                              { }
+                            \tl_put_right:Nx \l__zigma_koma_corr_list_tl 
+                              { \exp_not:N \href{mailto:\tl_use:N\l__zigma_koma_tmp_email_tl}{\tl_use:N\l__zigma_koma_tmp_email_tl} }
+                          }
+                      }
+                  }
+              }
+          }
+        
+        % Render footer if we have corresponding authors
+        \int_compare:nNnT { \l__zigma_koma_corr_count_int } > { 0 }
+          {
+            \vspace{1em}
+            \noindent
+            {\small
+            \textsuperscript{
+              \str_case:Vn \g_zigma_corresponding_marker_tl
+                {
+                  { envelope } { \Letter }
+                  { star } { \ensuremath{\star} }
+                  { asterisk } { * }
+                }
+            }
+            ~
+            \int_compare:nNnTF { \l__zigma_koma_corr_count_int } > { 1 }
+              { Corresponding~authors:~ }
+              { Corresponding~author:~ }
+            \tl_use:N \l__zigma_koma_corr_list_tl
+            }
+            \par
+          }
+      }
+  }
+
+\int_new:N \l__zigma_koma_corr_count_int
+\tl_new:N \l__zigma_koma_corr_list_tl
+\tl_new:N \l__zigma_koma_tmp_corr_tl
+\tl_new:N \l__zigma_koma_tmp_email_tl
+
+%% ========================================================================
+%% Hook into zigma's maketitle
+%% ========================================================================
+
+\cs_new_protected:Npn \zigma_koma_maketitle:
+  {
+    % KOMA-Script supports both single and twocolumn
+    % We handle both cases like article plugin
+    \if@twocolumn
+      \twocolumn[
+        \zigma_koma_render_title:
+        \zigma_koma_render_authors:
+        \zigma_koma_render_date:
+        \zigma_koma_render_abstract:
+        \zigma_koma_render_keywords:
+        \zigma_koma_render_metadata_footer:
+        \zigma_koma_render_corresponding_footer:
+      ]
+    \else
+      \zigma_koma_render_title:
+      \zigma_koma_render_authors:
+      \zigma_koma_render_date:
+      \zigma_koma_render_abstract:
+      \zigma_koma_render_keywords:
+        \zigma_koma_render_metadata_footer:
+      \zigma_koma_render_corresponding_footer:
+    \fi
+  }
+
+% Register this rendering function
+\cs_gset_eq:NN \zigma_render_maketitle: \zigma_koma_maketitle:
+
+\zigma_log:n { [PLUGIN]~KOMA-Script~plugin~loaded~successfully }
+
+\ExplSyntaxOff
+
+\endinput
