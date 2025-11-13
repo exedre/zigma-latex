@@ -4,9 +4,9 @@
 \RequirePackage{expl3}[2022-06-01]
 \ProvidesExplClass
   {zigma}
-  {2025-11-09}
-  {1.0.0}
-  {Zigma class — base class rendering}
+  {2025-11-13}
+  {1.0.2}
+  {Zigma class — base class rendering with transparent option pass-through}
 
 %% Essential packages (loaded before base class)
 \RequirePackage{xcolor}
@@ -74,6 +74,23 @@
 % Process all declared class options
 \ProcessKeyvalOptions*
 
+%% Determine baseclass (user can override with base= option)
+%% Priority: base= option > baseclass= option > default (rho)
+\newcommand{\zigma@final@baseclass}{\zigma@base}
+\ifx\zigma@base\@empty
+  \renewcommand{\zigma@final@baseclass}{\zigma@baseclass}
+\fi
+
+%% Store unknown options to pass to baseclass later
+\newtoks\zigma@unknown@options
+
+%% Now handle unknown options at LaTeX2e level
+%% This catches options like open=right, DIV=12, fontsize=12pt, etc.
+\DeclareOption*{%
+  \zigma@unknown@options=\expandafter{\the\zigma@unknown@options,\CurrentOption}%
+}
+\ProcessOptions\relax
+
 %% ========================================================================
 %% Load Template (if specified)
 %% ========================================================================
@@ -101,14 +118,18 @@
   }
 \ExplSyntaxOff
 
-%% Pass unknown options to the baseclass (e.g., fontsize=12pt, etc.)
+%% Pass unknown options to the baseclass (e.g., fontsize=12pt, open=right, DIV=12, etc.)
 %% This allows users to pass baseclass-specific options through Zigma
-\DeclareOption*{\PassOptionsToClass{\CurrentOption}{\zigma@baseclass}}
-\ProcessOptions\relax
-
-%% Load selected base class with twocolumn by default
-%% Users can override with base=article (single column), base=memoir, etc.
-\LoadClass[twocolumn]{\zigma@baseclass}
+%% Remove leading comma if present
+\edef\zigma@opts{\the\zigma@unknown@options}
+\ifx\zigma@opts\empty
+  % No unknown options - just load with twocolumn default
+  \LoadClass[twocolumn]{\zigma@final@baseclass}
+\else
+  % Remove leading comma and add to twocolumn default
+  \expandafter\edef\expandafter\zigma@opts\expandafter{\expandafter\@gobble\zigma@opts}
+  \expandafter\LoadClass\expandafter[\zigma@opts,twocolumn]{\zigma@final@baseclass}
+\fi
 
 %% Additional packages (loaded after base class to avoid conflicts)
 \RequirePackage{hyperref}
@@ -119,7 +140,7 @@
 \ExplSyntaxOn
 
 \tl_new:N \g_zigma_baseclass_tl
-\tl_gset:Nx \g_zigma_baseclass_tl { \zigma@baseclass }
+\tl_gset:Nn \g_zigma_baseclass_tl { \zigma@final@baseclass }
 \zigma_log:x { [ZIGMA]~Base~class~loaded:~\g_zigma_baseclass_tl }
 
 %% ========================================================================
