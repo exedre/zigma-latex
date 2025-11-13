@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-LPPL-blue.svg)](LICENSE)
 [![LaTeX](https://img.shields.io/badge/LaTeX-expl3-008080.svg)](https://www.latex-project.org/)
-[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
 [![CTAN](https://img.shields.io/badge/CTAN-ready-green.svg)](https://ctan.org)
 
 A modern, flexible LaTeX document class for academic journals and scientific publications, built entirely with LaTeX3's `expl3` programming layer. Features a modular base class renderer system for different base class rendering.
@@ -28,11 +28,6 @@ A modern, flexible LaTeX document class for academic journals and scientific pub
   - Multiple reference support with Oxford comma
   - Multilingual support (customizable labels)
   - Page and full references
-- **🔧 Baseclass Option Pass-Through** 🆕: Transparent pass-through of baseclass-specific options
-  - Use KOMA features: `\documentclass[base=scrbook,open=right,DIV=12]{zigma}`
-  - Access full baseclass capabilities without Zigma modifications
-  - Works with all baseclasses (article, memoir, KOMA, rho)
-  - Zero configuration required
 - **📚 4 Complete Plugins**: 
   - **Article**: Standard LaTeX articles
   - **Memoir**: Books, theses, long documents

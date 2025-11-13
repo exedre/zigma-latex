@@ -1,32 +1,186 @@
-%% Zigma LaTeX Class - Options Management
-%% Handles class options including baseclass selection
+%% ==============================================================================
+%% ZIGMA OPTION PARSER - Pure expl3 Implementation
+%% ==============================================================================
+%%
+%% This module provides a custom option processing system for the Zigma class,
+%% replacing kvoptions with a pure expl3 implementation. This was necessary
+%% because kvoptions has issues recognizing option names that start with 'z'.
+%%
+%% ARCHITECTURE:
+%% 1. Initialize storage for all z-prefixed options (global token lists)
+%% 2. Define \zigma_process_keyval:nn to handle individual key=value pairs
+%% 3. Use LaTeX2e \DeclareOption* to collect ALL class options into a token list
+%% 4. After \ProcessOptions\relax, use expl3 to parse the collected options
+%% 5. Separate Zigma options (recognized) from unknown options (for baseclass)
+%% 6. Determine final baseclass and build option string for \LoadClass
+%%
+%% OPTION NAMING CONVENTION:
+%% All Zigma options use 'z' prefix to avoid conflicts with baseclass options:
+%% - zbaseclass  : LaTeX class name (article, scrbook, memoir, etc.)
+%% - zbase       : Renderer name (article, memoir, koma, rho)
+%% - zmargin*    : Layout margins (left, right, top, bottom)
+%% - zcolumnsep  : Column separation width
+%% - zbib*       : Bibliography options (enable, preset, file, backend, style)
+%% - ztemplate   : Template selection
+%%
+%% ==============================================================================
 
 \ExplSyntaxOn
 
-%% ========================================================================
-%% Class Options - Base Class Selection
-%% ========================================================================
+%% ==============================================================================
+%% OPTION STORAGE - Global token lists and booleans
+%% ==============================================================================
 
-% Store the base class name (default: extarticle)
-\tl_new:N \g_zigma_baseclass_tl
-\tl_gset:Nn \g_zigma_baseclass_tl { extarticle }
+% Baseclass selection (z-prefixed for clarity and conflict avoidance)
+\tl_new:N \g_zigma_zbaseclass_tl
+\tl_gset:Nn \g_zigma_zbaseclass_tl { extarticle }
+\tl_new:N \g_zigma_zbase_tl
+\tl_gset:Nn \g_zigma_zbase_tl { rho }
 
-% Define key for baseclass option
-\keys_define:nn { zigma / classoptions }
+% Layout configuration (used by baseclass renderers in maketitle)
+% Default: 1.25cm left/right, 2cm top/bottom, 15pt column separation
+\tl_new:N \g_zigma_zmarginleft_tl
+\tl_gset:Nn \g_zigma_zmarginleft_tl { 1.25cm }
+\tl_new:N \g_zigma_zmarginright_tl
+\tl_gset:Nn \g_zigma_zmarginright_tl { 1.25cm }
+\tl_new:N \g_zigma_zmargintop_tl
+\tl_gset:Nn \g_zigma_zmargintop_tl { 2cm }
+\tl_new:N \g_zigma_zmarginbottom_tl
+\tl_gset:Nn \g_zigma_zmarginbottom_tl { 2cm }
+\tl_new:N \g_zigma_zcolumnsep_tl
+\tl_gset:Nn \g_zigma_zcolumnsep_tl { 15pt }
+
+% Bibliography system configuration
+\bool_new:N \g_zigma_zbib_bool
+\bool_gset_false:N \g_zigma_zbib_bool
+\tl_new:N \g_zigma_zbibpreset_tl
+\tl_new:N \g_zigma_zbibfile_tl
+\tl_new:N \g_zigma_zbibbackend_tl
+\tl_gset:Nn \g_zigma_zbibbackend_tl { biblatex }
+\tl_new:N \g_zigma_zbibstyle_tl
+
+% Template selection
+\tl_new:N \g_zigma_ztemplate_tl
+
+% Sequence to collect unknown options (passed to baseclass)
+\seq_new:N \g_zigma_unknown_options_seq
+
+%% ==============================================================================
+%% OPTION PROCESSING FUNCTION
+%% ==============================================================================
+
+%%
+%% \zigma_process_keyval:nn {key} {value}
+%%
+%% Process a single key=value pair by checking if the key is a known Zigma
+%% option. If recognized, store the value in the appropriate global variable.
+%% If unknown, add to the sequence for passing to the baseclass.
+%%
+%% This uses \str_case:nn for efficient pattern matching. The advantage over
+%% kvoptions is that we have FULL control over option names and processing.
+%%
+\cs_new_protected:Npn \zigma_process_keyval:nn #1 #2
   {
-    baseclass .tl_gset:N = \g_zigma_baseclass_tl,
-    baseclass .initial:n = { extarticle },
+    % Match known Zigma options
+    \str_case:nn {#1}
+      {
+        % Baseclass selection
+        { zbaseclass } { \tl_gset:Nn \g_zigma_zbaseclass_tl {#2} }
+        { zbase } { \tl_gset:Nn \g_zigma_zbase_tl {#2} }
+        
+        % Layout options
+        { zmarginleft } { \tl_gset:Nn \g_zigma_zmarginleft_tl {#2} }
+        { zmarginright } { \tl_gset:Nn \g_zigma_zmarginright_tl {#2} }
+        { zmargintop } { \tl_gset:Nn \g_zigma_zmargintop_tl {#2} }
+        { zmarginbottom } { \tl_gset:Nn \g_zigma_zmarginbottom_tl {#2} }
+        { zcolumnsep } { \tl_gset:Nn \g_zigma_zcolumnsep_tl {#2} }
+        
+        % Bibliography options
+        { zbib } { \bool_gset:Nn \g_zigma_zbib_bool { \str_if_eq_p:nn {#2} { true } } }
+        { zbibpreset } { \tl_gset:Nn \g_zigma_zbibpreset_tl {#2} }
+        { zbibfile } { \tl_gset:Nn \g_zigma_zbibfile_tl {#2} }
+        { zbibbackend } { \tl_gset:Nn \g_zigma_zbibbackend_tl {#2} }
+        { zbibstyle } { \tl_gset:Nn \g_zigma_zbibstyle_tl {#2} }
+        
+        % Template option
+        { ztemplate } { \tl_gset:Nn \g_zigma_ztemplate_tl {#2} }
+      }
+      {
+        % Unknown option: will pass to baseclass
+        \seq_gput_right:Nn \g_zigma_unknown_options_seq {#1=#2}
+      }
   }
 
-% Process unknown options: pass to base class
-\DeclareOption* { \PassOptionsToClass { \CurrentOption } { \g_zigma_baseclass_tl } }
+%% ==============================================================================
+%% MAIN PARSING FUNCTION - Called after \ProcessOptions\relax
+%% ==============================================================================
 
-% Custom option processing for key-value options
-\DeclareOption { baseclass }
+%%
+%% \zigma_parse_all_options:
+%%
+%% Main entry point for option parsing. This function:
+%% 1. Converts the collected token list to a comma-separated list
+%% 2. Iterates through each option, splitting on '=' delimiter
+%% 3. Calls \zigma_process_keyval:nn for each key=value pair
+%% 4. Determines the final baseclass (priority: zbase > zbaseclass > default)
+%% 5. Builds the option string for \LoadClass with unknown options
+%% 6. Stores for later use in loading the baseclass
+%%
+\cs_new_protected:Npn \zigma_parse_all_options:
   {
-    % This will be handled by kvoptions or similar
+    % Convert token list to comma-separated list for clist processing
+    \tl_new:N \l_zigma_options_list_tl
+    \tl_gset:Nx \l_zigma_options_list_tl { \the\g_zigma_all_options_toks }
+    
+    % Create comma-separated list for mapping
+    \clist_new:N \g_zigma_all_options_clist
+    \clist_gset:NV \g_zigma_all_options_clist \l_zigma_options_list_tl
+    
+    % Parse each option
+    \clist_map_inline:Nn \g_zigma_all_options_clist
+      {
+        % Check if option contains '=' (key=value format)
+        \str_if_contains:nnTF {##1} { = }
+          {
+            % Split on '=' and process key=value pair
+            \exp_args:Nnx \zigma_process_keyval:nn 
+              { \str_range:nnn {##1} {1} { \str_find:nn {##1} {=} - 1 } }
+              { \str_range:nnn {##1} { \str_find:nn {##1} {=} + 1 } { -1 } }
+          }
+          {
+            % No '=' means boolean flag (assume true)
+            \zigma_process_keyval:nn {##1} { true }
+          }
+      }
+    
+    % Determine final baseclass
+    % Priority: if zbase is not default, use it; otherwise use zbaseclass
+    \tl_new:N \l_zigma_final_baseclass_tl
+    \tl_if_eq:NnTF \g_zigma_zbase_tl { rho }
+      {
+        % zbase is default, so use zbaseclass value
+        \tl_set:Nx \l_zigma_final_baseclass_tl { \g_zigma_zbaseclass_tl }
+      }
+      {
+        % zbase was explicitly set, use it
+        \tl_set:Nx \l_zigma_final_baseclass_tl { \g_zigma_zbase_tl }
+      }
+    
+    \zigma_log:x { [ZIGMA]~Final~baseclass:~\l_zigma_final_baseclass_tl }
+    
+    % Build option string for baseclass, starting with twocolumn default
+    \tl_new:N \l_zigma_baseclass_options_tl
+    \tl_set:Nn \l_zigma_baseclass_options_tl { twocolumn }
+    
+    % Append unknown options (those not recognized as Zigma options)
+    \seq_map_inline:Nn \g_zigma_unknown_options_seq
+      { \tl_put_right:Nn \l_zigma_baseclass_options_tl { ,##1 } }
+    
+    \zigma_log:x { [ZIGMA]~Baseclass~options:~\l_zigma_baseclass_options_tl }
   }
 
 \ExplSyntaxOff
 
-\endinput
+%% ==============================================================================
+%% END OF OPTION PARSER
+%% ==============================================================================

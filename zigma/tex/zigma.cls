@@ -4,9 +4,9 @@
 \RequirePackage{expl3}[2022-06-01]
 \ProvidesExplClass
   {zigma}
-  {2025-11-13}
-  {1.0.2}
-  {Zigma class — base class rendering with transparent option pass-through}
+  {2025-11-09}
+  {1.0.0}
+  {Zigma class — base class rendering}
 
 %% Essential packages (loaded before base class)
 \RequirePackage{xcolor}
@@ -23,124 +23,93 @@
 \ExplSyntaxOff
 
 %% ========================================================================
-%% Class Options Processing
+%% Class Options Processing with expl3
 %% 
-%% Zigma supports options in \documentclass[...]{zigma} that control:
-%% - Baseclass selection (base=, baseclass=)
-%% - Layout configuration (margins, column separation)
-%% - Bibliography setup (bib=, bibpreset=, etc.)
-%% - Template selection (template=)
+%% Zigma supports z-prefixed options in \documentclass[...]{zigma}:
+%% - zbaseclass  : LaTeX class name (article, scrbook, memoir, etc.)
+%% - zbase       : Renderer name (article, memoir, koma, rho)
+%% - zmargin*    : Layout margins (left, right, top, bottom)
+%% - zcolumnsep  : Column separation
+%% - zbib*       : Bibliography options
+%% - ztemplate   : Template selection
 %%
-%% All other configuration (title, authors, metadata, colors) is done
-%% via \zigmasetup{...} after \begin{document}.
+%% Unknown options are automatically passed to the baseclass.
+%% All other configuration (title, authors, metadata) is done via
+%% \zigmasetup{...} after \begin{document}.
 %% ========================================================================
 
-% Load key-value option processing
-\RequirePackage{kvoptions}
-\SetupKeyvalOptions{
-  family=zigma,
-  prefix=zigma@
-}
+%% Load the option parser module (expl3-based)
+\InputIfFileExists{zigma-options.code.tex}
+  { }
+  { \ClassError{zigma}{Missing~zigma-options.code.tex}{} }
 
-% Baseclass selection (deprecated: baseclass=, prefer: base=)
-\DeclareStringOption[extarticle]{baseclass}
-\DeclareStringOption[rho]{base}
+%% ========================================================================
+%% Collect All Class Options (LaTeX2e level)
+%% ========================================================================
 
-% Layout configuration (used by baseclass renderers in maketitle)
-% Default: 1.25cm left/right margins, 2cm top/bottom, 15pt column separation
-% Usage: \documentclass[marginleft=3cm,margintop=2.5cm]{zigma}
-\DeclareStringOption[1.25cm]{marginleft}
-\DeclareStringOption[1.25cm]{marginright}
-\DeclareStringOption[2cm]{margintop}
-\DeclareStringOption[2cm]{marginbottom}
-\DeclareStringOption[15pt]{columnsep}
+% Token list to collect all options
+\newtoks\g_zigma_all_options_toks
 
-% Bibliography configuration (processed in preamble before \begin{document})
-% Enables bibliography system when bib=true
-% bibpreset: select predefined style (ieee, apa, chicago, nature, etc.)
-% bibfile: specify .bib file(s) - comma-separated for multiple files
-% bibbackend: backend engine (default: biblatex, alternative: bibtex)
-% bibstyle: override bibliography style
-\DeclareBoolOption[false]{bib}
-\DeclareStringOption{bibpreset}
-\DeclareStringOption{bibfile}
-\DeclareStringOption[biblatex]{bibbackend}
-\DeclareStringOption{bibstyle}
-
-% Template selection (loads pre-configured template)
-% Available: ilcibernetico, ieee, apa, nature, thesis
-\DeclareStringOption{template}
-
-% Process all declared class options
-\ProcessKeyvalOptions*
-
-%% Determine baseclass (user can override with base= option)
-%% Priority: base= option > baseclass= option > default (rho)
-\newcommand{\zigma@final@baseclass}{\zigma@base}
-\ifx\zigma@base\@empty
-  \renewcommand{\zigma@final@baseclass}{\zigma@baseclass}
-\fi
-
-%% Store unknown options to pass to baseclass later
-\newtoks\zigma@unknown@options
-
-%% Now handle unknown options at LaTeX2e level
-%% This catches options like open=right, DIV=12, fontsize=12pt, etc.
+% Capture all unknown options into the token list
 \DeclareOption*{%
-  \zigma@unknown@options=\expandafter{\the\zigma@unknown@options,\CurrentOption}%
+  \expandafter\g_zigma_all_options_toks\expandafter{%
+    \the\g_zigma_all_options_toks,\CurrentOption
+  }%
 }
+
+% Process options at LaTeX2e level (does nothing except trigger \DeclareOption*)
 \ProcessOptions\relax
 
 %% ========================================================================
-%% Load Template (if specified)
+%% Parse Options with expl3 and Determine Baseclass
 %% ========================================================================
 
-% Templates can override class options for margin and layout settings.
-% Template priority: User-specified options > Template defaults > Zigma defaults
-% Templates can customize: marginleft, marginright, margintop, marginbottom, columnsep
-% Templates can also configure: base= (if not explicitly set), bib= options
-
 \ExplSyntaxOn
-\tl_if_empty:NF \zigma@template
-  {
-    % Load template file
-    \file_if_exist:nTF {templates/zigma-template-\zigma@template.code.tex}
-      {
-        \file_input:n {templates/zigma-template-\zigma@template.code.tex}
-        \zigma_log:x { [ZIGMA]~Template~loaded:~\zigma@template }
-      }
-      {
-        \msg_error:nnxxx { zigma } { template-not-found }
-          { \zigma@template }
-          { ieee-conference,~nature,~thesis-simple }
-          { See~templates/README.md }
-      }
-  }
+
+% Parse all collected options using the custom parser
+\zigma_parse_all_options:
+
+% Now we have:
+% - \l_zigma_final_baseclass_tl = the class to load
+% - \l_zigma_baseclass_options_tl = options to pass to it
+% - All \g_zigma_z* variables set with values
+
 \ExplSyntaxOff
 
-%% Pass unknown options to the baseclass (e.g., fontsize=12pt, open=right, DIV=12, etc.)
-%% This allows users to pass baseclass-specific options through Zigma
-%% Remove leading comma if present
-\edef\zigma@opts{\the\zigma@unknown@options}
-\ifx\zigma@opts\empty
-  % No unknown options - just load with twocolumn default
-  \LoadClass[twocolumn]{\zigma@final@baseclass}
-\else
-  % Remove leading comma and add to twocolumn default
-  \expandafter\edef\expandafter\zigma@opts\expandafter{\expandafter\@gobble\zigma@opts}
-  \expandafter\LoadClass\expandafter[\zigma@opts,twocolumn]{\zigma@final@baseclass}
-\fi
+%% ========================================================================
+%% Load the Base Class with All Options
+%% ========================================================================
 
-%% Additional packages (loaded after base class to avoid conflicts)
+% Use \expandafter to properly expand the option list and class name
+\expandafter\expandafter\expandafter\LoadClass
+  \expandafter\expandafter\expandafter[\l_zigma_baseclass_options_tl]
+  {\l_zigma_final_baseclass_tl}
+
+%% ========================================================================
+%% Additional Packages (loaded after base class to avoid conflicts)
+%% ========================================================================
+
 \RequirePackage{hyperref}
 \RequirePackage{marvosym}
 \RequirePackage{academicons}
 
-%% Store the baseclass in expl3 variable
+%% ========================================================================
+%% Load Baseclass Renderer and Template
+%% ========================================================================
+
+% Load the loader module (handles baseclass renderers and templates)
+\InputIfFileExists{zigma-loader.code.tex}
+  { }
+  { \ClassError{zigma}{Missing~zigma-loader.code.tex}{} }
+
 \ExplSyntaxOn
 
+% Load baseclass renderer and template (if specified)
+\zigma_load_baseclass_and_template:
+
+% Store the baseclass in expl3 variable
 \tl_new:N \g_zigma_baseclass_tl
-\tl_gset:Nn \g_zigma_baseclass_tl { \zigma@final@baseclass }
+\tl_gset:Nn \g_zigma_baseclass_tl { \l_zigma_final_baseclass_tl }
 \zigma_log:x { [ZIGMA]~Base~class~loaded:~\g_zigma_baseclass_tl }
 
 %% ========================================================================

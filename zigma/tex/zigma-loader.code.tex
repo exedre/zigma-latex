@@ -1,0 +1,129 @@
+%% ==============================================================================
+%% ZIGMA BASECLASS AND TEMPLATE LOADER
+%% ==============================================================================
+%%
+%% This module handles the loading of:
+%% 1. Baseclass rendering modules (article, memoir, koma, rho)
+%% 2. Template files for pre-configured setups
+%%
+%% ARCHITECTURE:
+%% Baseclass Rendering:
+%% - Maps LaTeX class names (article, scrbook, etc.) to rendering modules
+%% - Each baseclass has its own \maketitle implementation
+%% - Stored in baseclasses/<name>/zigma-render.code.tex
+%%
+%% Templates:
+%% - Pre-configured setups for specific journals/scenarios
+%% - Can override Zigma options (colors, layouts, etc.)
+%% - Stored in templates/zigma-template-<name>.code.tex
+%%
+%% ==============================================================================
+
+\ExplSyntaxOn
+
+%% ==============================================================================
+%% BASECLASS RENDERING LOADER
+%% ==============================================================================
+
+%%
+%% \zigma_load_baseclass_renderer:n {baseclass}
+%%
+%% Load the appropriate rendering module for the given baseclass.
+%% Maps LaTeX class names to rendering implementations:
+%% - article, extarticle → article/zigma-render.code.tex
+%% - scrartcl, scrreprt, scrbook → koma/zigma-render.code.tex
+%% - memoir → memoir/zigma-render.code.tex
+%% - rho → rho/zigma-render.code.tex
+%%
+\cs_new_protected:Npn \zigma_load_baseclass_renderer:n #1
+  {
+    \tl_new:N \l_zigma_renderer_path_tl
+    
+    % Determine which renderer to load based on baseclass
+    \str_case:nn {#1}
+      {
+        { article } { \tl_set:Nn \l_zigma_renderer_path_tl { article } }
+        { extarticle } { \tl_set:Nn \l_zigma_renderer_path_tl { article } }
+        { scrartcl } { \tl_set:Nn \l_zigma_renderer_path_tl { koma } }
+        { scrreprt } { \tl_set:Nn \l_zigma_renderer_path_tl { koma } }
+        { scrbook } { \tl_set:Nn \l_zigma_renderer_path_tl { koma } }
+        { memoir } { \tl_set:Nn \l_zigma_renderer_path_tl { memoir } }
+      }
+      {
+        % Unknown baseclass - default to rho
+        \tl_set:Nn \l_zigma_renderer_path_tl { rho }
+        \zigma_log:x { [ZIGMA]~Unknown~baseclass~#1,~using~rho~renderer }
+      }
+    
+    \zigma_log:x { [ZIGMA]~Loading~renderer:~\l_zigma_renderer_path_tl }
+    
+    % Load the rendering module
+    \file_if_exist:nTF 
+      { baseclasses/\l_zigma_renderer_path_tl/zigma-render.code.tex }
+      {
+        \file_input:n { baseclasses/\l_zigma_renderer_path_tl/zigma-render.code.tex }
+      }
+      {
+        \msg_error:nnn { zigma } { renderer-not-found }
+          { baseclasses/\l_zigma_renderer_path_tl/zigma-render.code.tex }
+      }
+  }
+
+%% ==============================================================================
+%% TEMPLATE LOADER
+%% ==============================================================================
+
+%%
+%% \zigma_load_template:n {template_name}
+%%
+%% Load a template file that pre-configures Zigma for a specific use case.
+%% Templates can override:
+%% - Color schemes
+%% - Layout parameters
+%% - Bibliography presets
+%% - Header/footer configurations
+%%
+%% Template files are in: templates/zigma-template-<name>.code.tex
+%%
+\cs_new_protected:Npn \zigma_load_template:n #1
+  {
+    \tl_if_empty:nF {#1}
+      {
+        \file_if_exist:nTF { templates/zigma-template-#1.code.tex }
+          {
+            \file_input:n { templates/zigma-template-#1.code.tex }
+            \zigma_log:x { [ZIGMA]~Template~loaded:~#1 }
+          }
+          {
+            \msg_error:nnn { zigma } { template-not-found }
+              { templates/zigma-template-#1.code.tex }
+          }
+      }
+  }
+
+%% ==============================================================================
+%% MAIN LOADER - Called during class initialization
+%% ==============================================================================
+
+%%
+%% \zigma_load_baseclass_and_template:
+%%
+%% Main entry point that:
+%% 1. Loads the appropriate baseclass renderer
+%% 2. Loads the template if one was specified
+%% 3. Sets up the maketitle mechanism
+%%
+\cs_new_protected:Npn \zigma_load_baseclass_and_template:
+  {
+    % Load the rendering module for this baseclass
+    \zigma_load_baseclass_renderer:n { \l_zigma_final_baseclass_tl }
+    
+    % Load template if specified
+    \zigma_load_template:n { \g_zigma_ztemplate_tl }
+  }
+
+\ExplSyntaxOff
+
+%% ==============================================================================
+%% END OF BASECLASS AND TEMPLATE LOADER
+%% ==============================================================================
