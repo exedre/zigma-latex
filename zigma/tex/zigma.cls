@@ -47,14 +47,19 @@
 %% Collect All Class Options (LaTeX2e level)
 %% ========================================================================
 
-% Token list to collect all options
-\newtoks\g_zigma_all_options_toks
+% Token list to collect all options (plain TeX register, LaTeX2e-safe name)
+\newtoks\gzigmaalloptionstoks
 
 % Capture all unknown options into the token list
 \DeclareOption*{%
-  \expandafter\g_zigma_all_options_toks\expandafter{%
-    \the\g_zigma_all_options_toks,\CurrentOption
-  }%
+  \begingroup
+  \edef\zigmatmp{\the\gzigmaalloptionstoks}%
+  \if\relax\detokenize\expandafter{\zigmatmp}\relax
+    \global\gzigmaalloptionstoks=\expandafter{\CurrentOption}%
+  \else
+    \global\gzigmaalloptionstoks=\expandafter{\zigmatmp,\CurrentOption}%
+  \fi
+  \endgroup
 }
 
 % Process options at LaTeX2e level (does nothing except trigger \DeclareOption*)
@@ -69,6 +74,27 @@
 % Parse all collected options using the custom parser
 \zigma_parse_all_options:
 
+% ------------------------------------------------------------------------
+% Compatibility bridge for existing renderer/modules expecting \zigma@... vars
+% ------------------------------------------------------------------------
+\cs_set:cpx { zigma@marginleft } { \tl_use:N \g_zigma_zmarginleft_tl }
+\cs_set:cpx { zigma@marginright } { \tl_use:N \g_zigma_zmarginright_tl }
+\cs_set:cpx { zigma@margintop } { \tl_use:N \g_zigma_zmargintop_tl }
+\cs_set:cpx { zigma@marginbottom } { \tl_use:N \g_zigma_zmarginbottom_tl }
+\cs_set:cpx { zigma@columnsep } { \tl_use:N \g_zigma_zcolumnsep_tl }
+\cs_set:cpx { zigma@base } { \tl_use:N \g_zigma_zbase_tl }
+\cs_set:cpx { zigma@baseclass } { \tl_use:N \g_zigma_zbaseclass_tl }
+\cs_set:cpx { zigma@plugin } { \tl_use:N \g_zigma_zbase_tl }
+\cs_set:cpx { zigma@bibpreset } { \tl_use:N \g_zigma_zbibpreset_tl }
+\cs_set:cpx { zigma@bibfile } { \tl_use:N \g_zigma_zbibfile_tl }
+\cs_set:cpx { zigma@bibbackend } { \tl_use:N \g_zigma_zbibbackend_tl }
+\cs_set:cpx { zigma@bibstyle } { \tl_use:N \g_zigma_zbibstyle_tl }
+\cs_set:cpx { zigma@template } { \tl_use:N \g_zigma_ztemplate_tl }
+
+% kvoptions-style boolean used later in this class
+\newif\ifzigma@bib
+\bool_if:NTF \g_zigma_zbib_bool { \zigma@bibtrue } { \zigma@bibfalse }
+
 % Now we have:
 % - \l_zigma_final_baseclass_tl = the class to load
 % - \l_zigma_baseclass_options_tl = options to pass to it
@@ -80,18 +106,31 @@
 %% Load the Base Class with All Options
 %% ========================================================================
 
-% Use \expandafter to properly expand the option list and class name
-\expandafter\expandafter\expandafter\LoadClass
-  \expandafter\expandafter\expandafter[\l_zigma_baseclass_options_tl]
-  {\l_zigma_final_baseclass_tl}
+% Bridge expl3 option vars to LaTeX2e-safe macros for \LoadClass.
+\ExplSyntaxOn
+\cs_set:Npx \zigmabaseclassoptions { \l_zigma_baseclass_options_tl }
+\cs_set:Npx \zigmabaseclassname { \l_zigma_final_baseclass_tl }
+\str_if_eq:VnT \zigmabaseclassname { memoir }
+  {
+    % memoir defines \@namelet with \newcommand and can clash in this load order
+    \cs_undefine:c { @namelet }
+  }
+\ExplSyntaxOff
+\LoadClass[\zigmabaseclassoptions]{\zigmabaseclassname}
 
 %% ========================================================================
 %% Additional Packages (loaded after base class to avoid conflicts)
 %% ========================================================================
 
+% Allow URL line breaks (especially important in two-column bibliography)
+\PassOptionsToPackage{hyphens}{url}
 \RequirePackage{hyperref}
+\RequirePackage{xurl}
 \RequirePackage{marvosym}
 \RequirePackage{academicons}
+
+% Encourage URL breaks at many punctuation points.
+\Urlmuskip=0mu plus 2mu\relax
 
 %% ========================================================================
 %% Load Baseclass Renderer and Template
@@ -106,6 +145,7 @@
 
 % Load baseclass renderer and template (if specified)
 \zigma_load_baseclass_and_template:
+\ExplSyntaxOn
 
 % Store the baseclass in expl3 variable
 \tl_new:N \g_zigma_baseclass_tl
@@ -221,62 +261,6 @@
     }
   \ExplSyntaxOff
 \fi
-
-\ExplSyntaxOn
-
-%% ========================================================================
-%% Load Base Class Renderer
-%% ========================================================================
-
-\ExplSyntaxOn
-
-% Map base class to renderer name
-\tl_new:N \l_zigma_renderer_name_tl
-
-% Define renderer error message
-\msg_new:nnn { zigma } { renderer-not-found }
-  { Renderer~file~not~found:~baseclasses/#1/zigma-render.code.tex }
-
-% Check if user specified explicit base= option
-\tl_if_empty:NTF \zigma@base
-  {
-    % No explicit renderer, map from baseclass
-    \str_case:Vn \g_zigma_baseclass_tl
-      {
-        { article }     { \tl_set:Nn \l_zigma_renderer_name_tl { article } }
-        { extarticle }  { \tl_set:Nn \l_zigma_renderer_name_tl { article } }
-        { scrartcl }    { \tl_set:Nn \l_zigma_renderer_name_tl { koma } }
-        { scrreprt }    { \tl_set:Nn \l_zigma_renderer_name_tl { koma } }
-        { scrbook }     { \tl_set:Nn \l_zigma_renderer_name_tl { koma } }
-        { memoir }      { \tl_set:Nn \l_zigma_renderer_name_tl { memoir } }
-      }
-    
-    % Default to rho renderer if not mapped
-    \tl_if_empty:NT \l_zigma_renderer_name_tl
-      {
-        \zigma_log:n { [ZIGMA]~Base~class~'\g_zigma_baseclass_tl'~not~mapped,~using~rho~renderer }
-        \tl_set:Nn \l_zigma_renderer_name_tl { rho }
-      }
-  }
-  {
-    % User specified explicit base= option
-    \tl_set:NV \l_zigma_renderer_name_tl \zigma@base
-    \zigma_log:x { [ZIGMA]~Using~explicit~renderer:~\l_zigma_renderer_name_tl }
-  }
-
-% Load the renderer
-\zigma_log:x { [ZIGMA]~Loading~renderer:~\l_zigma_renderer_name_tl }
-
-\exp_args:Nx \file_if_exist:nTF { baseclasses/\l_zigma_renderer_name_tl /zigma-render.code.tex }
-  {
-    \exp_args:Nx \file_input:n { baseclasses/\l_zigma_renderer_name_tl /zigma-render.code.tex }
-  }
-  {
-    \msg_error:nnx { zigma } { renderer-not-found } { \l_zigma_renderer_name_tl }
-  }
-
-\ExplSyntaxOff
-
 
 \ExplSyntaxOn
 

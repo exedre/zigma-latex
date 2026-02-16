@@ -145,7 +145,6 @@
   % Title
   title            .tl_set:N = \g_zigma_title_tl,
   subtitle         .tl_set:N = \g_zigma_subtitle_tl,
-  journalname      .tl_set:N = \g_zigma_journalname_tl,
   date             .tl_set:N = \g_zigma_date_tl,
   date.show        .bool_gset:N = \g_zigma_date_show_bool,
   abstract         .tl_set:N = \g_zigma_abstract_tl,
@@ -200,7 +199,7 @@
 %% Public Command: \zigmasetup
 %% ============================================================================
 
-\NewDocumentCommand{\zigmasetup}{m}{
+\NewDocumentCommand{\zigmasetup}{+m}{
   \keys_set:nn { zigma / setup } {#1}
   \zigma_apply_setup:  % Run post-processing steps
 }

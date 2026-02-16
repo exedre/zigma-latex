@@ -25,6 +25,9 @@
 %% BASECLASS RENDERING LOADER
 %% ==============================================================================
 
+\tl_new:N \l_zigma_renderer_path_tl
+\tl_new:N \l_zigma_template_name_tl
+
 %%
 %% \zigma_load_baseclass_renderer:n {baseclass}
 %%
@@ -37,10 +40,12 @@
 %%
 \cs_new_protected:Npn \zigma_load_baseclass_renderer:n #1
   {
-    \tl_new:N \l_zigma_renderer_path_tl
+    \tl_set:Nn \l_tmpa_tl {#1}
+    \tl_trim_spaces:N \l_tmpa_tl
+    \str_set:Nx \l_tmpa_str { \tl_to_str:V \l_tmpa_tl }
     
     % Determine which renderer to load based on baseclass
-    \str_case:nn {#1}
+    \str_case:VnF \l_tmpa_str
       {
         { article } { \tl_set:Nn \l_zigma_renderer_path_tl { article } }
         { extarticle } { \tl_set:Nn \l_zigma_renderer_path_tl { article } }
@@ -48,26 +53,28 @@
         { scrreprt } { \tl_set:Nn \l_zigma_renderer_path_tl { koma } }
         { scrbook } { \tl_set:Nn \l_zigma_renderer_path_tl { koma } }
         { memoir } { \tl_set:Nn \l_zigma_renderer_path_tl { memoir } }
+        { rho } { \tl_set:Nn \l_zigma_renderer_path_tl { rho } }
       }
       {
         % Unknown baseclass - default to rho
         \tl_set:Nn \l_zigma_renderer_path_tl { rho }
-        \zigma_log:x { [ZIGMA]~Unknown~baseclass~#1,~using~rho~renderer }
+        \zigma_log:x { [ZIGMA]~Unknown~baseclass~\l_tmpa_str,~using~rho~renderer }
       }
     
     \zigma_log:x { [ZIGMA]~Loading~renderer:~\l_zigma_renderer_path_tl }
     
     % Load the rendering module
     \file_if_exist:nTF 
-      { baseclasses/\l_zigma_renderer_path_tl/zigma-render.code.tex }
+      { zigma-class/baseclasses/\l_zigma_renderer_path_tl/zigma-render.code.tex }
       {
-        \file_input:n { baseclasses/\l_zigma_renderer_path_tl/zigma-render.code.tex }
+        \file_input:n { zigma-class/baseclasses/\l_zigma_renderer_path_tl/zigma-render.code.tex }
       }
       {
         \msg_error:nnn { zigma } { renderer-not-found }
-          { baseclasses/\l_zigma_renderer_path_tl/zigma-render.code.tex }
+          { zigma-class/baseclasses/\l_zigma_renderer_path_tl/zigma-render.code.tex }
       }
   }
+\cs_generate_variant:Nn \zigma_load_baseclass_renderer:n { V }
 
 %% ==============================================================================
 %% TEMPLATE LOADER
@@ -89,17 +96,30 @@
   {
     \tl_if_empty:nF {#1}
       {
-        \file_if_exist:nTF { templates/zigma-template-#1.code.tex }
+        \tl_set:Nn \l_zigma_template_name_tl {#1}
+        \tl_trim_spaces:N \l_zigma_template_name_tl
+        \str_set:Nx \l_tmpa_str { \tl_to_str:V \l_zigma_template_name_tl }
+
+        % Backward-compatible aliases used in tests/docs.
+        \str_case:Vn \l_tmpa_str
           {
-            \file_input:n { templates/zigma-template-#1.code.tex }
-            \zigma_log:x { [ZIGMA]~Template~loaded:~#1 }
+            { ieee-conference } { \tl_set:Nn \l_zigma_template_name_tl { ieee } }
+            { thesis-simple } { \tl_set:Nn \l_zigma_template_name_tl { thesis } }
+          }
+
+        \file_if_exist:nTF { zigma-class/templates/zigma-template-\l_zigma_template_name_tl.code.tex }
+          {
+            \file_input:n { zigma-class/templates/zigma-template-\l_zigma_template_name_tl.code.tex }
+            \zigma_log:x { [ZIGMA]~Template~loaded:~\l_zigma_template_name_tl }
           }
           {
-            \msg_error:nnn { zigma } { template-not-found }
-              { templates/zigma-template-#1.code.tex }
+            \ClassError{zigma}
+              {Missing~template~file:~zigma-class/templates/zigma-template-\l_zigma_template_name_tl.code.tex}
+              {}
           }
       }
   }
+\cs_generate_variant:Nn \zigma_load_template:n { V }
 
 %% ==============================================================================
 %% MAIN LOADER - Called during class initialization
@@ -115,11 +135,20 @@
 %%
 \cs_new_protected:Npn \zigma_load_baseclass_and_template:
   {
-    % Load the rendering module for this baseclass
-    \zigma_load_baseclass_renderer:n { \l_zigma_final_baseclass_tl }
+    % Renderer selection:
+    % - ilcibernetico always uses rho journal renderer.
+    % - If user set base/zbase, use it explicitly.
+    % - Otherwise infer renderer from loaded baseclass.
+    \str_if_eq:VnTF \g_zigma_ztemplate_tl { ilcibernetico }
+      { \zigma_load_baseclass_renderer:n { rho } }
+      {
+        \tl_if_empty:VTF \g_zigma_zbase_tl
+          { \zigma_load_baseclass_renderer:V \l_zigma_final_baseclass_tl }
+          { \zigma_load_baseclass_renderer:V \g_zigma_zbase_tl }
+      }
     
     % Load template if specified
-    \zigma_load_template:n { \g_zigma_ztemplate_tl }
+    \zigma_load_template:V \g_zigma_ztemplate_tl
   }
 
 \ExplSyntaxOff

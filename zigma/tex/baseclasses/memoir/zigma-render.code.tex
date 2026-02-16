@@ -7,7 +7,7 @@
 
 % Apply geometry with class option values (defaults in zigma.cls)
 % Defaults: 1.25cm left/right, 2cm top/bottom, 15pt columnsep
-% Override with: \documentclass[marginleft=3cm,margintop=2.5cm,...]{zigma}
+% Override with: \documentclass[zmarginleft=3cm,zmargintop=2.5cm,...]{zigma}
 \RequirePackage{geometry}
 \geometry{
   left=\zigma@marginleft,
@@ -215,21 +215,12 @@
 \cs_new_protected:Npn \zigma_memoir_render_affiliations:
   {
     % Iterate through registered affiliations
-    \int_set:Nn \l_tmpa_int { 0 }
-    \int_while_do:nNnn { \l_tmpa_int } < { \seq_count:N \g_zigma_affil_ids_seq }
+    \prop_map_inline:Nn \g_zigma_affil_prop
       {
-        \tl_clear:N \l_tmpa_tl
-        \exp_args:Nc \prop_get:NnN { g_zigma_affil_prop_\int_use:N\l_tmpa_int } { name } \l_tmpa_tl
-        
-        \quark_if_no_value:NF \l_tmpa_tl
-          {
-            \par
-            \noindent
-            \textsuperscript{ \zigma_affil_symbol:n { \int_use:N\l_tmpa_int } }
-            \tl_use:N \l_tmpa_tl
-          }
-        
-        \int_incr:N \l_tmpa_int
+        \par
+        \noindent
+        \textsuperscript{ \zigma_affil_symbol:n { ##1 } }
+        {\small ##2}
       }
   }
 

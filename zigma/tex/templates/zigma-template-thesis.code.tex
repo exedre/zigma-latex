@@ -10,7 +10,7 @@
 %% - Single column layout
 %%
 %% USAGE:
-%%   \documentclass[template=thesis-simple]{zigma}
+%%   \documentclass[ztemplate=thesis-simple]{zigma}
 %%
 %% OVERRIDES:
 %%   User options always win. Template sets defaults only.
@@ -36,7 +36,7 @@
     % User chose memoir, OK
   \else
     % User chose something else (article, koma, etc.)
-    \typeout{[TEMPLATE WARNING] thesis-simple expects memoir, but baseclass=\zigma@baseclass\space specified}
+    \typeout{[TEMPLATE WARNING] thesis-simple expects memoir, but zbaseclass=\zigma@baseclass\space specified}
     \typeout{[TEMPLATE WARNING] Using user choice: \zigma@baseclass}
   \fi
 \fi

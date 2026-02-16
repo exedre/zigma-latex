@@ -289,6 +289,13 @@
     % Load package
     \exp_args:No \PassOptionsToPackage { \tl_use:N \l_tmpa_tl } {biblatex}
     \RequirePackage{biblatex}
+
+    % Bibliography line-breaking tuning for narrow/two-column layouts.
+    \AtBeginBibliography
+      {
+        \raggedright
+        \setlength{\emergencystretch}{2em}
+      }
     
     \zigma_log:n { [ZIGMA~BIB]~Biblatex~loaded~with~options:~\tl_use:N\l_tmpa_tl }
   }

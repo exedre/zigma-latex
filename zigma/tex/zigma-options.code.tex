@@ -15,13 +15,16 @@
 %% 6. Determine final baseclass and build option string for \LoadClass
 %%
 %% OPTION NAMING CONVENTION:
-%% All Zigma options use 'z' prefix to avoid conflicts with baseclass options:
+%% All Zigma options MUST use 'z' prefix to avoid conflicts with baseclass options
+%% and to maintain clear namespace separation:
 %% - zbaseclass  : LaTeX class name (article, scrbook, memoir, etc.)
 %% - zbase       : Renderer name (article, memoir, koma, rho)
 %% - zmargin*    : Layout margins (left, right, top, bottom)
 %% - zcolumnsep  : Column separation width
 %% - zbib*       : Bibliography options (enable, preset, file, backend, style)
 %% - ztemplate   : Template selection
+%%
+%% No aliases without 'z' prefix to enforce consistent namespace.
 %%
 %% ==============================================================================
 
@@ -35,7 +38,7 @@
 \tl_new:N \g_zigma_zbaseclass_tl
 \tl_gset:Nn \g_zigma_zbaseclass_tl { extarticle }
 \tl_new:N \g_zigma_zbase_tl
-\tl_gset:Nn \g_zigma_zbase_tl { rho }
+\tl_gset:Nn \g_zigma_zbase_tl { }
 
 % Layout configuration (used by baseclass renderers in maketitle)
 % Default: 1.25cm left/right, 2cm top/bottom, 15pt column separation
@@ -81,33 +84,40 @@
 %%
 \cs_new_protected:Npn \zigma_process_keyval:nn #1 #2
   {
+    \tl_set:Nn \l_tmpa_tl {#1}
+    \tl_set:Nn \l_tmpb_tl {#2}
+    \tl_trim_spaces:N \l_tmpa_tl
+    \tl_trim_spaces:N \l_tmpb_tl
+    \str_set:Nx \l_tmpa_str { \tl_to_str:V \l_tmpa_tl }
+    \str_set:Nx \l_tmpb_str { \tl_to_str:V \l_tmpb_tl }
+
     % Match known Zigma options
-    \str_case:nn {#1}
+    \str_case:Vn \l_tmpa_str
       {
         % Baseclass selection
-        { zbaseclass } { \tl_gset:Nn \g_zigma_zbaseclass_tl {#2} }
-        { zbase } { \tl_gset:Nn \g_zigma_zbase_tl {#2} }
+        { zbaseclass } { \tl_gset:NV \g_zigma_zbaseclass_tl \l_tmpb_tl }
+        { zbase } { \tl_gset:NV \g_zigma_zbase_tl \l_tmpb_tl }
         
         % Layout options
-        { zmarginleft } { \tl_gset:Nn \g_zigma_zmarginleft_tl {#2} }
-        { zmarginright } { \tl_gset:Nn \g_zigma_zmarginright_tl {#2} }
-        { zmargintop } { \tl_gset:Nn \g_zigma_zmargintop_tl {#2} }
-        { zmarginbottom } { \tl_gset:Nn \g_zigma_zmarginbottom_tl {#2} }
-        { zcolumnsep } { \tl_gset:Nn \g_zigma_zcolumnsep_tl {#2} }
+        { zmarginleft } { \tl_gset:NV \g_zigma_zmarginleft_tl \l_tmpb_tl }
+        { zmarginright } { \tl_gset:NV \g_zigma_zmarginright_tl \l_tmpb_tl }
+        { zmargintop } { \tl_gset:NV \g_zigma_zmargintop_tl \l_tmpb_tl }
+        { zmarginbottom } { \tl_gset:NV \g_zigma_zmarginbottom_tl \l_tmpb_tl }
+        { zcolumnsep } { \tl_gset:NV \g_zigma_zcolumnsep_tl \l_tmpb_tl }
         
         % Bibliography options
-        { zbib } { \bool_gset:Nn \g_zigma_zbib_bool { \str_if_eq_p:nn {#2} { true } } }
-        { zbibpreset } { \tl_gset:Nn \g_zigma_zbibpreset_tl {#2} }
-        { zbibfile } { \tl_gset:Nn \g_zigma_zbibfile_tl {#2} }
-        { zbibbackend } { \tl_gset:Nn \g_zigma_zbibbackend_tl {#2} }
-        { zbibstyle } { \tl_gset:Nn \g_zigma_zbibstyle_tl {#2} }
+        { zbib } { \bool_gset:Nn \g_zigma_zbib_bool { \str_if_eq_p:Vn \l_tmpb_str { true } } }
+        { zbibpreset } { \tl_gset:NV \g_zigma_zbibpreset_tl \l_tmpb_tl }
+        { zbibfile } { \tl_gset:NV \g_zigma_zbibfile_tl \l_tmpb_tl }
+        { zbibbackend } { \tl_gset:NV \g_zigma_zbibbackend_tl \l_tmpb_tl }
+        { zbibstyle } { \tl_gset:NV \g_zigma_zbibstyle_tl \l_tmpb_tl }
         
         % Template option
-        { ztemplate } { \tl_gset:Nn \g_zigma_ztemplate_tl {#2} }
+        { ztemplate } { \tl_gset:NV \g_zigma_ztemplate_tl \l_tmpb_tl }
       }
       {
         % Unknown option: will pass to baseclass
-        \seq_gput_right:Nn \g_zigma_unknown_options_seq {#1=#2}
+        \seq_gput_right:Nx \g_zigma_unknown_options_seq { \tl_use:N \l_tmpa_tl = \tl_use:N \l_tmpb_tl }
       }
   }
 
@@ -130,7 +140,7 @@
   {
     % Convert token list to comma-separated list for clist processing
     \tl_new:N \l_zigma_options_list_tl
-    \tl_gset:Nx \l_zigma_options_list_tl { \the\g_zigma_all_options_toks }
+    \tl_gset:Nx \l_zigma_options_list_tl { \the\gzigmaalloptionstoks }
     
     % Create comma-separated list for mapping
     \clist_new:N \g_zigma_all_options_clist
@@ -139,42 +149,66 @@
     % Parse each option
     \clist_map_inline:Nn \g_zigma_all_options_clist
       {
-        % Check if option contains '=' (key=value format)
-        \str_if_contains:nnTF {##1} { = }
+        \tl_if_blank:nTF {##1}
           {
-            % Split on '=' and process key=value pair
-            \exp_args:Nnx \zigma_process_keyval:nn 
-              { \str_range:nnn {##1} {1} { \str_find:nn {##1} {=} - 1 } }
-              { \str_range:nnn {##1} { \str_find:nn {##1} {=} + 1 } { -1 } }
+            % Skip empty entries (e.g. leading comma from option collection)
           }
           {
-            % No '=' means boolean flag (assume true)
-            \zigma_process_keyval:nn {##1} { true }
+            \seq_set_split:Nnn \l_tmpa_seq {=} {##1}
+            \int_compare:nNnTF { \seq_count:N \l_tmpa_seq } > { 1 }
+              {
+                \seq_pop_left:NN \l_tmpa_seq \l_tmpa_tl
+                \seq_pop_left:NN \l_tmpa_seq \l_tmpb_tl
+                \exp_args:NVV \zigma_process_keyval:nn \l_tmpa_tl \l_tmpb_tl
+              }
+              {
+                % No '=' means boolean flag (assume true)
+                \zigma_process_keyval:nn {##1} { true }
+              }
           }
       }
     
-    % Determine final baseclass
-    % Priority: if zbase is not default, use it; otherwise use zbaseclass
+    % Determine final baseclass (used only for \LoadClass)
     \tl_new:N \l_zigma_final_baseclass_tl
-    \tl_if_eq:NnTF \g_zigma_zbase_tl { rho }
-      {
-        % zbase is default, so use zbaseclass value
-        \tl_set:Nx \l_zigma_final_baseclass_tl { \g_zigma_zbaseclass_tl }
-      }
-      {
-        % zbase was explicitly set, use it
-        \tl_set:Nx \l_zigma_final_baseclass_tl { \g_zigma_zbase_tl }
-      }
+    \tl_set:Nx \l_zigma_final_baseclass_tl { \g_zigma_zbaseclass_tl }
+
+    % Template-driven baseclass override for thesis workflows.
+    \str_if_eq:VnT \g_zigma_ztemplate_tl { thesis }
+      { \tl_set:Nn \l_zigma_final_baseclass_tl { memoir } }
+    \str_if_eq:VnT \g_zigma_ztemplate_tl { thesis-simple }
+      { \tl_set:Nn \l_zigma_final_baseclass_tl { memoir } }
     
     \zigma_log:x { [ZIGMA]~Final~baseclass:~\l_zigma_final_baseclass_tl }
     
-    % Build option string for baseclass, starting with twocolumn default
+    % Build option string for baseclass.
+    % Keep twocolumn as default for article-like classes, but avoid forcing it
+    % on memoir where it can trigger class-level command conflicts.
     \tl_new:N \l_zigma_baseclass_options_tl
-    \tl_set:Nn \l_zigma_baseclass_options_tl { twocolumn }
+    \tl_if_eq:NnTF \l_zigma_final_baseclass_tl { memoir }
+      { \tl_clear:N \l_zigma_baseclass_options_tl }
+      { \tl_set:Nn \l_zigma_baseclass_options_tl { twocolumn } }
     
-    % Append unknown options (those not recognized as Zigma options)
+     % Append unknown options (those not recognized as Zigma options)
     \seq_map_inline:Nn \g_zigma_unknown_options_seq
-      { \tl_put_right:Nn \l_zigma_baseclass_options_tl { ,##1 } }
+      {
+        \bool_set_false:N \l_tmpa_bool
+        % Guardrail: never forward Zigma options (with 'z' prefix) to the base class.
+        \tl_if_in:nnT {##1} { zbaseclass= } { \bool_set_true:N \l_tmpa_bool }
+        \tl_if_in:nnT {##1} { zbase= } { \bool_set_true:N \l_tmpa_bool }
+        \tl_if_in:nnT {##1} { zmarginleft= } { \bool_set_true:N \l_tmpa_bool }
+        \tl_if_in:nnT {##1} { zmarginright= } { \bool_set_true:N \l_tmpa_bool }
+        \tl_if_in:nnT {##1} { zmargintop= } { \bool_set_true:N \l_tmpa_bool }
+        \tl_if_in:nnT {##1} { zmarginbottom= } { \bool_set_true:N \l_tmpa_bool }
+        \tl_if_in:nnT {##1} { zcolumnsep= } { \bool_set_true:N \l_tmpa_bool }
+        \tl_if_in:nnT {##1} { zbib= } { \bool_set_true:N \l_tmpa_bool }
+        \tl_if_in:nnT {##1} { zbibpreset= } { \bool_set_true:N \l_tmpa_bool }
+        \tl_if_in:nnT {##1} { zbibfile= } { \bool_set_true:N \l_tmpa_bool }
+        \tl_if_in:nnT {##1} { zbibbackend= } { \bool_set_true:N \l_tmpa_bool }
+        \tl_if_in:nnT {##1} { zbibstyle= } { \bool_set_true:N \l_tmpa_bool }
+        \tl_if_in:nnT {##1} { ztemplate= } { \bool_set_true:N \l_tmpa_bool }
+        \bool_if:NF \l_tmpa_bool
+          { \tl_put_right:Nn \l_zigma_baseclass_options_tl { ,##1 } }
+      }
     
     \zigma_log:x { [ZIGMA]~Baseclass~options:~\l_zigma_baseclass_options_tl }
   }

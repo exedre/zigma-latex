@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-LPPL-blue.svg)](LICENSE)
 [![LaTeX](https://img.shields.io/badge/LaTeX-expl3-008080.svg)](https://www.latex-project.org/)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](zigma/CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
 [![CTAN](https://img.shields.io/badge/CTAN-ready-green.svg)](https://ctan.org)
 
 A modern, flexible LaTeX document class for academic journals and scientific publications, built entirely with LaTeX3's `expl3` programming layer. Features a modular base class renderer system for different base class rendering.
@@ -87,7 +87,7 @@ Your content here...
 ### With Bibliography
 
 ```latex
-\documentclass[bib,bibpreset=ieee,bibfile=references.bib]{zigma-class/zigma}
+\documentclass[bib,bibpreset=ieee,zbibfile=references.bib]{zigma-class/zigma}
 
 \zigmasetup{
   title = {Machine Learning in Bioinformatics},
@@ -118,19 +118,19 @@ Pre-configured templates for common use cases:
 
 ```latex
 % Il Cibernetico - Green themed academic journal
-\documentclass[template=ilcibernetico,bibfile=references.bib]{zigma-class/zigma}
+\documentclass[ztemplate=ilcibernetico,zbibfile=references.bib]{zigma-class/zigma}
 
 % IEEE style paper
-\documentclass[template=ieee,bibfile=references.bib]{zigma-class/zigma}
+\documentclass[ztemplate=ieee,zbibfile=references.bib]{zigma-class/zigma}
 
 % APA style paper
-\documentclass[template=apa,bibfile=references.bib]{zigma-class/zigma}
+\documentclass[ztemplate=apa,zbibfile=references.bib]{zigma-class/zigma}
 
 % Nature journal style
-\documentclass[template=nature,bibfile=references.bib]{zigma-class/zigma}
+\documentclass[ztemplate=nature,zbibfile=references.bib]{zigma-class/zigma}
 
 % Thesis template
-\documentclass[template=thesis]{zigma-class/zigma}
+\documentclass[ztemplate=thesis]{zigma-class/zigma}
 ```
 
 **Available templates**: `ilcibernetico`, `ieee`, `apa`, `nature`, `thesis`
@@ -204,16 +204,16 @@ See \zigmafullref{fig:diagram}.
 
 ```latex
 % Use article (default)
-\documentclass[baseclass=article]{zigma-class/zigma}
+\documentclass[zzbaseclass=article]{zigma-class/zigma}
 
 % Or use memoir for books
-\documentclass[baseclass=memoir]{zigma-class/zigma}
+\documentclass[zzbaseclass=memoir]{zigma-class/zigma}
 
 % Or use KOMA-Script for European typography
-\documentclass[baseclass=scrartcl]{zigma-class/zigma}
+\documentclass[zzbaseclass=scrartcl]{zigma-class/zigma}
 
 % Or use rho for academic journals
-\documentclass[baseclass=rho]{zigma-class/zigma}
+\documentclass[zzbaseclass=rho]{zigma-class/zigma}
 
 \zigmasetup{
   title = {Your Title},
@@ -227,12 +227,12 @@ See \zigmafullref{fig:diagram}.
 ```latex
 % Custom margins and column separation
 \documentclass[
-  baseclass=article,
-  marginleft=3cm,
-  marginright=2.5cm,
-  margintop=3cm,
-  marginbottom=3cm,
-  columnsep=25pt
+  zbaseclass=article,
+  zmarginleft=3cm,
+  zmarginright=2.5cm,
+  zmargintop=3cm,
+  zmarginbottom=3cm,
+  zcolumnsep=25pt
 ]{zigma-class/zigma}
 
 % Note: KOMA plugin only supports columnsep (uses typearea for margins)
@@ -241,7 +241,7 @@ See \zigmafullref{fig:diagram}.
 ### Customizing Headers and Footers 🆕
 
 ```latex
-\documentclass[baseclass=article]{zigma-class/zigma}
+\documentclass[zzbaseclass=article]{zigma-class/zigma}
 
 \zigmasetup{
   title = {My Document},
@@ -375,8 +375,8 @@ This will display:
 
 ## 📖 Documentation
 
-- **[User Guide](zigma/USER_GUIDE.md)** - Complete usage guide for end users
-- **[CHANGELOG](zigma/CHANGELOG.md)** - Version history and changes
+- **[User Guide](USER_GUIDE.md)** - Complete usage guide for end users
+- **[CHANGELOG](CHANGELOG.md)** - Version history and changes
 - **[AGENTS.md](AGENTS.md)** - AI agent contributions log
 
 ### Examples

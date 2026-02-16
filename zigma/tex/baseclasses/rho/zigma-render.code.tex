@@ -26,7 +26,7 @@
 
 % Apply rho-specific geometry using class options
 % Defaults: 1.25cm left/right, 2cm top/bottom, 15pt columnsep
-% Override with: \documentclass[marginleft=3cm,margintop=2.5cm,...]{zigma}
+% Override with: \documentclass[zmarginleft=3cm,zmargintop=2.5cm,...]{zigma}
 \RequirePackage{geometry}
 \geometry{
     left=\zigma@marginleft, 
@@ -163,11 +163,11 @@
     \RaggedRight
     
     % Journal name if set (rho style: small, bold, sans)
-    \tl_if_empty:NF \g_zigma_journalname_tl
+    \tl_if_empty:NF \g_zigma_journal_name_tl
       {
         \group_begin:
         \sffamily\bfseries\fontsize{8}{14}\selectfont
-        \tl_use:N \g_zigma_journalname_tl
+        \tl_use:N \g_zigma_journal_name_tl
         % Journal URL link if journal.url is set
         \tl_if_empty:NF \g_zigma_journal_url_tl
           {

@@ -463,7 +463,7 @@ Pre-configured templates simplify common document types:
 
 #### Il Cibernetico Template
 ```latex
-\documentclass[template=ilcibernetico,bibfile=refs.bib]{zigma-class/zigma}
+\documentclass[ztemplate=ilcibernetico,zbibfile=refs.bib]{zigma-class/zigma}
 
 \zigmasetup{
   title = {Artificial Intelligence in Robotics},
@@ -491,7 +491,7 @@ Research shows \zigmacite{key1}...
 
 #### IEEE Template
 ```latex
-\documentclass[template=ieee,bibfile=refs.bib]{zigma-class/zigma}
+\documentclass[ztemplate=ieee,zbibfile=refs.bib]{zigma-class/zigma}
 
 \zigmasetup{
   title = {Novel Machine Learning Algorithm},
@@ -508,7 +508,7 @@ Your IEEE-style paper...
 
 #### APA Template
 ```latex
-\documentclass[template=apa,bibfile=refs.bib]{zigma-class/zigma}
+\documentclass[ztemplate=apa,zbibfile=refs.bib]{zigma-class/zigma}
 
 \zigmasetup{
   title = {Cognitive Development in Children},
@@ -524,7 +524,7 @@ Your APA-style paper...
 
 #### Nature Template
 ```latex
-\documentclass[template=nature,bibfile=refs.bib]{zigma-class/zigma}
+\documentclass[ztemplate=nature,zbibfile=refs.bib]{zigma-class/zigma}
 
 \zigmasetup{
   title = {CRISPR Gene Editing Breakthrough},
@@ -540,7 +540,7 @@ Your Nature-style article...
 
 #### Thesis Template
 ```latex
-\documentclass[template=thesis]{zigma-class/zigma}
+\documentclass[ztemplate=thesis]{zigma-class/zigma}
 
 \zigmasetup{
   title = {Deep Learning Applications},
