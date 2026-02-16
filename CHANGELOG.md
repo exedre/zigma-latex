@@ -2,6 +2,37 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.1.0] - 2026-02-16
+
+**Refinement & Documentation Enhancement** 🎯
+
+### Changes
+
+**Code Quality**:
+- Consolidated `journal.name` variable - removed duplicate `journalname` alias for cleaner API
+- Fixed variable synchronization in template system (zigma-template-ilcibernetico)
+- Improved consistency across all rendering backends
+
+**Documentation**:
+- Rewrote parser rules section from bullet lists to flowing narrative prose
+- Expanded "Risoluzione base class e renderer" section with detailed examples
+- Added practical step-by-step walkthroughs for common scenarios
+- Improved clarity of option descriptions throughout documentation
+- Added z-prefix namespace convention documentation
+
+**Developer Tools**:
+- Created sync script (`bin/sync-from-github.sh`) for repository synchronization
+
+**Tests**:
+- All 31 tests passing ✅
+- Verified journal.name functionality
+
+### Fixes
+- Resolved journal name variable inconsistency
+- Clarified documentation language (removed formal address, improved narrative flow)
+
+---
+
 ## [1.0.0] - 2025-11-09
 
 **Official CTAN Release** 🎉

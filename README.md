@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-LPPL-blue.svg)](LICENSE)
 [![LaTeX](https://img.shields.io/badge/LaTeX-expl3-008080.svg)](https://www.latex-project.org/)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](CHANGELOG.md)
 [![CTAN](https://img.shields.io/badge/CTAN-ready-green.svg)](https://ctan.org)
 
 A modern, flexible LaTeX document class for academic journals and scientific publications, built entirely with LaTeX3's `expl3` programming layer. Features a modular base class renderer system for different base class rendering.
@@ -494,7 +494,7 @@ See [LICENSE](LICENSE) file for details.
 
 ## 🗺️ Roadmap
 
-### Current Version (v1.0.0)
+### Current Version (v1.1.0)
 
 - [x] CTAN official release
 
