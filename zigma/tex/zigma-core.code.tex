@@ -346,6 +346,23 @@
   }
 
 %% ============================================================================
+%% Drop Cap Policy
+%% ============================================================================
+%%
+%% When use.dropcap=false, neutralize \lettrine so templates/content that still
+%% emit it render plain text and stay compilable across all renderers.
+%%
+\cs_new_protected:Npn \zigma_apply_dropcap_policy:
+  {
+    \bool_if:NF \g_zigma_use_dropcap_bool
+      {
+        \cs_if_exist:NTF \lettrine
+          { \RenewDocumentCommand \lettrine { O{} m m } { ##2##3 } }
+          { \NewDocumentCommand \lettrine { O{} m m } { ##2##3 } }
+      }
+  }
+
+%% ============================================================================
 %% License Rendering (canonical metadata output)
 %% ============================================================================
 %%

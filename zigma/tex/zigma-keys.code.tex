@@ -470,16 +470,19 @@
     % Step 4: Apply hyperlink visual policy (no URL boxes + style from setup)
     \zigma_apply_link_style:
 
-    % Step 5: Build canonical license text (used by all renderers)
+    % Step 5: Apply dropcap policy (neutralize \lettrine when disabled)
+    \zigma_apply_dropcap_policy:
+
+    % Step 6: Build canonical license text (used by all renderers)
     \zigma_meta_license_render_build:
 
-    % Step 6: Build canonical publication string
+    % Step 7: Build canonical publication string
     \zigma_meta_published_render_build:
 
-    % Step 7: Display configuration state (debug mode only)
+    % Step 8: Display configuration state (debug mode only)
     \bool_if:NT \g_zigma_debug_bool { \zigma_log_state_soft: }
     
-    % Step 8: Display registered authors (debug mode only)
+    % Step 9: Display registered authors (debug mode only)
     \bool_if:NT \g_zigma_debug_bool { \zigma_authors_show: }
 
   }
