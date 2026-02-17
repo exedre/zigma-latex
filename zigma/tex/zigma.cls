@@ -128,6 +128,7 @@
 \RequirePackage{xurl}
 \RequirePackage{marvosym}
 \RequirePackage{academicons}
+\RequirePackage{lettrine}
 
 % Encourage URL breaks at many punctuation points.
 \Urlmuskip=0mu plus 2mu\relax
