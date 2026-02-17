@@ -104,6 +104,22 @@
       {
         \tl_gset:Nn \g_zigma_corresponding_marker_tl { envelope }
       }
+
+    % Drop cap helper for ilcibernetico body text.
+    % Usage:
+    %   \zigmailcincipit{L}{a cibernetica ...}
+    % Optional:
+    %   \zigmailcincipit[lines=2]{L}{a cibernetica ...}
+    \ProvideDocumentCommand \zigmailcincipit { O{lines=3} m m }
+      {
+        \bool_if:NTF \g_zigma_use_dropcap_bool
+          {
+            \cs_if_exist:NTF \lettrine
+              { \lettrine[##1]{##2}{##3} }
+              { ##2##3 }
+          }
+          { ##2##3 }
+      }
   }
 
 \ExplSyntaxOff

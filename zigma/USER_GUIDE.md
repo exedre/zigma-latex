@@ -522,6 +522,15 @@ Research shows \zigmacite{key1}...
 
 **Features**: Green theme (#096), IEEE bibliography, smart headers (small.title or title + lead author)
 
+Il template espone anche un helper per l'incipit con drop cap:
+
+```latex
+\section{Introduzione}
+\zigmailcincipit{L}{a cibernetica richiede un incipit ben riconoscibile.}
+```
+
+Con `use.dropcap = false` lo stesso comando produce testo normale senza `\lettrine`.
+
 #### IEEE Template
 ```latex
 \documentclass[ztemplate=ieee,zbibfile=refs.bib]{zigma-class/zigma}
