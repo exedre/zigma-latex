@@ -273,7 +273,7 @@
     \tl_if_empty:NF \g_zigma_meta_received_tl { \int_incr:N \l_tmpa_int }
     \tl_if_empty:NF \g_zigma_meta_revised_tl { \int_incr:N \l_tmpa_int }
     \tl_if_empty:NF \g_zigma_meta_accepted_tl { \int_incr:N \l_tmpa_int }
-    \tl_if_empty:NF \g_zigma_meta_published_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_published_rendered_tl { \int_incr:N \l_tmpa_int }
     \tl_if_empty:NF \g_zigma_meta_license_rendered_tl { \int_incr:N \l_tmpa_int }
     
     % Only render if we have metadata to show
@@ -323,11 +323,11 @@
         % New line after dates if any were present
         \tl_if_empty:NF \g_zigma_meta_received_tl { \par }
         
-        % Published date on separate line
-        \tl_if_empty:NF \g_zigma_meta_published_tl
+        % Published line on separate line
+        \tl_if_empty:NF \g_zigma_meta_published_rendered_tl
           {
             \noindent
-            {\small\bfseries Published:}~{\small\g_zigma_meta_published_tl}
+            {\small\g_zigma_meta_published_rendered_tl}
             \par
           }
         

@@ -81,6 +81,12 @@
 \tl_new:N \g_zigma_meta_revised_tl
 \tl_new:N \g_zigma_meta_accepted_tl
 \tl_new:N \g_zigma_meta_published_tl
+\bool_new:N \g_zigma_meta_published_show_bool
+\tl_new:N \g_zigma_meta_published_date_tl
+\tl_new:N \g_zigma_meta_published_venue_tl
+\tl_new:N \g_zigma_meta_published_url_tl
+\tl_new:N \g_zigma_meta_published_label_tl
+\tl_new:N \g_zigma_meta_published_rendered_tl
 \tl_new:N \g_zigma_meta_doi_tl
 \tl_new:N \g_zigma_meta_uuid_tl
 \tl_new:N \g_zigma_meta_license_tl
@@ -188,6 +194,12 @@
 \tl_gset:Nn \g_zigma_meta_revised_tl       {}
 \tl_gset:Nn \g_zigma_meta_accepted_tl      {}
 \tl_gset:Nn \g_zigma_meta_published_tl     {}
+\bool_gset_false:N \g_zigma_meta_published_show_bool
+\tl_gset:Nn \g_zigma_meta_published_date_tl {}
+\tl_gset:Nn \g_zigma_meta_published_venue_tl {}
+\tl_gset:Nn \g_zigma_meta_published_url_tl {}
+\tl_gset:Nn \g_zigma_meta_published_label_tl {Pubblicato~il}
+\tl_gset:Nn \g_zigma_meta_published_rendered_tl {}
 \tl_gset:Nn \g_zigma_meta_doi_tl           {}
 \tl_gset:Nn \g_zigma_meta_uuid_tl          {}
 \tl_gset:Nn \g_zigma_meta_license_tl       {}
@@ -524,6 +536,61 @@
       }
   }
 
+%% ============================================================================
+%% Published Rendering (canonical metadata output)
+%% ============================================================================
+\cs_new_protected:Npn \zigma_meta_published_render_build:
+  {
+    \tl_clear:N \g_zigma_meta_published_rendered_tl
+
+    \bool_if:NTF \g_zigma_meta_published_show_bool
+      {
+        \tl_clear:N \l_tmpa_tl
+        \tl_clear:N \l_tmpb_tl
+        \tl_clear:N \l_tmpc_tl
+
+        % Date: prefer structured field, fallback to legacy metadata.published
+        \tl_if_empty:NTF \g_zigma_meta_published_date_tl
+          { \tl_set:NV \l_tmpa_tl \g_zigma_meta_published_tl }
+          { \tl_set:NV \l_tmpa_tl \g_zigma_meta_published_date_tl }
+
+        % Venue text with optional link
+        \tl_if_empty:NF \g_zigma_meta_published_venue_tl
+          {
+            \tl_if_empty:NTF \g_zigma_meta_published_url_tl
+              { \tl_set:NV \l_tmpb_tl \g_zigma_meta_published_venue_tl }
+              {
+                \tl_set:Nx \l_tmpb_tl
+                  {
+                    \exp_not:N \href
+                      { \tl_use:N \g_zigma_meta_published_url_tl }
+                      { \tl_use:N \g_zigma_meta_published_venue_tl }
+                  }
+              }
+          }
+
+        % Sentence: "Pubblicato il <date> su <venue>"
+        \tl_if_empty:NTF \l_tmpa_tl
+          {
+            \tl_if_empty:NF \l_tmpb_tl
+              { \tl_set:Nx \l_tmpc_tl { Pubblicato~su~\exp_not:V \l_tmpb_tl } }
+          }
+          {
+            \tl_set:Nx \l_tmpc_tl
+              { \tl_use:N \g_zigma_meta_published_label_tl ~ \exp_not:V \l_tmpa_tl }
+            \tl_if_empty:NF \l_tmpb_tl
+              { \tl_put_right:Nx \l_tmpc_tl { ~su~\exp_not:V \l_tmpb_tl } }
+          }
+
+        \tl_gset:NV \g_zigma_meta_published_rendered_tl \l_tmpc_tl
+      }
+      {
+        % Legacy compatibility path
+        \tl_if_empty:NF \g_zigma_meta_published_tl
+          { \tl_gset:NV \g_zigma_meta_published_rendered_tl \g_zigma_meta_published_tl }
+      }
+  }
+
 \cs_new_protected:Npn \zigma_log_state: {
   \zigma_log:n { ===== ~ ZIGMA ~ STATE ~ DUMP ~ BEGIN ~ ===== }
   \zigma_log:x { margin.left    = \skip_use:N \g_zigma_margin_left_skip }
@@ -592,6 +659,12 @@
     \zigma_log:x { metadata.revised       = \tl_use:N \g_zigma_meta_revised_tl }
     \zigma_log:x { metadata.accepted      = \tl_use:N \g_zigma_meta_accepted_tl }
     \zigma_log:x { metadata.published     = \tl_use:N \g_zigma_meta_published_tl }
+    \zigma_log:x { metadata.published.show = \bool_if:NTF \g_zigma_meta_published_show_bool {true}{false} }
+    \zigma_log:x { metadata.published.date = \tl_use:N \g_zigma_meta_published_date_tl }
+    \zigma_log:x { metadata.published.venue= \tl_use:N \g_zigma_meta_published_venue_tl }
+    \zigma_log:x { metadata.published.url  = \tl_use:N \g_zigma_meta_published_url_tl }
+    \zigma_log:x { metadata.published.label= \tl_use:N \g_zigma_meta_published_label_tl }
+    \zigma_log:x { metadata.published.final= \tl_use:N \g_zigma_meta_published_rendered_tl }
     \zigma_log:x { metadata.doi           = \tl_use:N \g_zigma_meta_doi_tl }
     \zigma_log:x { metadata.uuid          = \tl_use:N \g_zigma_meta_uuid_tl }
     \zigma_log:x { metadata.license       = \tl_use:N \g_zigma_meta_license_tl }

@@ -261,7 +261,11 @@ Document metadata for publishing:
   metadata.received = {2024-01-15},
   metadata.revised = {2024-02-20},
   metadata.accepted = {2024-03-10},
-  metadata.published = {2024-04-01},
+  metadata.published.show = true,
+  metadata.published.date = {2026-02-17},
+  metadata.published.venue = {Rivista di Filosofia Tecnica},
+  metadata.published.url = {https://rivista.example.org/articolo/123},
+  % metadata.published.label = {Pubblicato il},   % optional text label
   
   % Keywords
   metadata.keywords = {quantum mechanics, particle physics, LHC},

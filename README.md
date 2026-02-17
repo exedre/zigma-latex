@@ -352,7 +352,10 @@ Zigma uses a modern key-value configuration system:
   metadata.doi = {10.1234/journal.2024.001},
   metadata.received = {2024-01-15},
   metadata.accepted = {2024-03-20},
-  metadata.published = {2024-04-10},
+  metadata.published.show = true,
+  metadata.published.date = {2026-02-17},
+  metadata.published.venue = {Rivista di Filosofia Tecnica},
+  metadata.published.url = {https://rivista.example.org/articolo/123},
   metadata.keywords = {keyword1, keyword2},
   metadata.license = {CC-BY-4.0},
 }

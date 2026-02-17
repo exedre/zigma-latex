@@ -390,7 +390,7 @@
         \tl_if_empty:NF \g_zigma_meta_received_tl { \int_incr:N \l__zigma_rho_meta_count_int }
         \tl_if_empty:NF \g_zigma_meta_revised_tl { \int_incr:N \l__zigma_rho_meta_count_int }
         \tl_if_empty:NF \g_zigma_meta_accepted_tl { \int_incr:N \l__zigma_rho_meta_count_int }
-            \tl_if_empty:NF \g_zigma_meta_published_tl { \int_incr:N \l__zigma_rho_meta_count_int }
+            \tl_if_empty:NF \g_zigma_meta_published_rendered_tl { \int_incr:N \l__zigma_rho_meta_count_int }
             \tl_if_empty:NF \g_zigma_meta_license_rendered_tl { \int_incr:N \l__zigma_rho_meta_count_int }
         
         % Also check for corresponding authors
@@ -467,10 +467,10 @@
                 {\color{rhocolor}\bfseries Accepted:~}\g_zigma_meta_accepted_tl\hspace{10pt}
               }
             % Published on separate line if we had other dates
-            \tl_if_empty:NF \g_zigma_meta_published_tl
+            \tl_if_empty:NF \g_zigma_meta_published_rendered_tl
               {
                 \tl_if_empty:NF \g_zigma_meta_received_tl { \par }
-                {\color{rhocolor}\bfseries Published:~}\g_zigma_meta_published_tl\par
+                \g_zigma_meta_published_rendered_tl\par
               }
             
             % License

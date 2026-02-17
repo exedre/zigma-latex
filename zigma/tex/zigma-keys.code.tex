@@ -169,6 +169,12 @@
   metadata.revised       .tl_set:N = \g_zigma_meta_revised_tl,
   metadata.accepted      .tl_set:N = \g_zigma_meta_accepted_tl,
   metadata.published     .tl_set:N = \g_zigma_meta_published_tl,
+  metadata.published.show .bool_set:N = \g_zigma_meta_published_show_bool,
+  metadata.published.show .initial:n  = false,
+  metadata.published.date .tl_set:N = \g_zigma_meta_published_date_tl,
+  metadata.published.venue .tl_set:N = \g_zigma_meta_published_venue_tl,
+  metadata.published.url  .tl_set:N = \g_zigma_meta_published_url_tl,
+  metadata.published.label .tl_set:N = \g_zigma_meta_published_label_tl,
   metadata.doi           .tl_set:N = \g_zigma_meta_doi_tl,
   metadata.uuid          .tl_set:N = \g_zigma_meta_uuid_tl,
   metadata.license       .tl_set:N = \g_zigma_meta_license_tl,
@@ -302,6 +308,16 @@
     { \tl_gset:NV \g_zigma_meta_accepted_tl \l_tmpa_tl }
   \zigma_apply_if_present:nn {metadata.published}
     { \tl_gset:NV \g_zigma_meta_published_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.published.show}
+    { \bool_gset:Nn \g_zigma_meta_published_show_bool { \l_tmpa_tl } }
+  \zigma_apply_if_present:nn {metadata.published.date}
+    { \tl_gset:NV \g_zigma_meta_published_date_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.published.venue}
+    { \tl_gset:NV \g_zigma_meta_published_venue_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.published.url}
+    { \tl_gset:NV \g_zigma_meta_published_url_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.published.label}
+    { \tl_gset:NV \g_zigma_meta_published_label_tl \l_tmpa_tl }
   \zigma_apply_if_present:nn {metadata.doi}
     { \tl_gset:NV \g_zigma_meta_doi_tl \l_tmpa_tl }
   \zigma_apply_if_present:nn {metadata.uuid}
@@ -457,10 +473,13 @@
     % Step 5: Build canonical license text (used by all renderers)
     \zigma_meta_license_render_build:
 
-    % Step 6: Display configuration state (debug mode only)
+    % Step 6: Build canonical publication string
+    \zigma_meta_published_render_build:
+
+    % Step 7: Display configuration state (debug mode only)
     \bool_if:NT \g_zigma_debug_bool { \zigma_log_state_soft: }
     
-    % Step 7: Display registered authors (debug mode only)
+    % Step 8: Display registered authors (debug mode only)
     \bool_if:NT \g_zigma_debug_bool { \zigma_authors_show: }
 
   }
