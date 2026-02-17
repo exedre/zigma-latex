@@ -198,7 +198,7 @@
 \tl_gset:Nn \g_zigma_meta_published_date_tl {}
 \tl_gset:Nn \g_zigma_meta_published_venue_tl {}
 \tl_gset:Nn \g_zigma_meta_published_url_tl {}
-\tl_gset:Nn \g_zigma_meta_published_label_tl {Pubblicato~il}
+\tl_gset:Nn \g_zigma_meta_published_label_tl {Pubblicato il}
 \tl_gset:Nn \g_zigma_meta_published_rendered_tl {}
 \tl_gset:Nn \g_zigma_meta_doi_tl           {}
 \tl_gset:Nn \g_zigma_meta_uuid_tl          {}
@@ -548,6 +548,7 @@
         \tl_clear:N \l_tmpa_tl
         \tl_clear:N \l_tmpb_tl
         \tl_clear:N \l_tmpc_tl
+        \tl_clear:N \l_tmpd_tl
 
         % Date: prefer structured field, fallback to legacy metadata.published
         \tl_if_empty:NTF \g_zigma_meta_published_date_tl
@@ -576,8 +577,10 @@
               { \tl_set:Nx \l_tmpc_tl { Pubblicato~su~\exp_not:V \l_tmpb_tl } }
           }
           {
+            \tl_set:Nx \l_tmpd_tl
+              { \tl_trim_spaces:n { \tl_use:N \g_zigma_meta_published_label_tl } }
             \tl_set:Nx \l_tmpc_tl
-              { \tl_use:N \g_zigma_meta_published_label_tl ~ \exp_not:V \l_tmpa_tl }
+              { \exp_not:V \l_tmpd_tl \c_space_tl \exp_not:V \l_tmpa_tl }
             \tl_if_empty:NF \l_tmpb_tl
               { \tl_put_right:Nx \l_tmpc_tl { ~su~\exp_not:V \l_tmpb_tl } }
           }
