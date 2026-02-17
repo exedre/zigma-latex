@@ -496,7 +496,7 @@ Pre-configured templates simplify common document types:
   title = {Artificial Intelligence in Robotics},
   small.title = {AI in Robotics},
   abstract = {This paper explores...},
-  keywords = {AI, robotics, machine learning},
+  metadata.keywords = {AI, robotics, machine learning},
   journal.name = {Il Cibernetico},
   
   authors.0.name = {Marco Rossi},

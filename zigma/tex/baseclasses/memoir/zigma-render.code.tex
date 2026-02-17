@@ -255,12 +255,12 @@
 \cs_new_protected:Npn \zigma_memoir_render_keywords:
   {
     % Render keywords if set
-    \tl_if_empty:NF \g_zigma_keywords_tl
+    \tl_if_empty:NF \g_zigma_meta_keywords_tl
       {
         \par
         \vspace{0.5em}
         \noindent
-        \textbf{Keywords:}~\tl_use:N \g_zigma_keywords_tl
+        \textbf{Keywords:}~\tl_use:N \g_zigma_meta_keywords_tl
         \par
         \vspace{2em}
       }

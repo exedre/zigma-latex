@@ -54,7 +54,7 @@ A modern, flexible LaTeX document class for academic journals and scientific pub
   subtitle = {A Comprehensive Study},
   date = {\today},
   abstract = {This paper investigates quantum entanglement in multi-particle systems...},
-  keywords = {quantum mechanics, entanglement, many-body physics},
+  metadata.keywords = {quantum mechanics, entanglement, many-body physics},
   
   % Configure authors
   affiliations.0 = {University of Rome - Department of Physics},
@@ -94,7 +94,7 @@ Your content here...
   authors.0.name = {Alice Johnson},
   authors.0.corresponding = true,
   abstract = {This paper surveys recent advances...},
-  keywords = {machine learning, bioinformatics, genomics},
+  metadata.keywords = {machine learning, bioinformatics, genomics},
 }
 
 \begin{document}

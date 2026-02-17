@@ -4,9 +4,9 @@
 \RequirePackage{expl3}[2022-06-01]
 \ProvidesExplClass
   {zigma}
-  {2025-11-09}
-  {1.0.0}
-  {Zigma class — base class rendering}
+  {2025-11-13}
+  {1.0.2}
+  {Zigma class — base class rendering with transparent option pass-through}
 
 %% Essential packages (loaded before base class)
 \RequirePackage{xcolor}
