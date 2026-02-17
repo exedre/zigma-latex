@@ -173,6 +173,7 @@
   metadata.published.show .initial:n  = false,
   metadata.published.date .tl_set:N = \g_zigma_meta_published_date_tl,
   metadata.published.venue .tl_set:N = \g_zigma_meta_published_venue_tl,
+  metadata.published.title .tl_set:N = \g_zigma_meta_published_title_tl,
   metadata.published.url  .tl_set:N = \g_zigma_meta_published_url_tl,
   metadata.published.label .tl_set:N = \g_zigma_meta_published_label_tl,
   metadata.doi           .tl_set:N = \g_zigma_meta_doi_tl,
@@ -315,6 +316,8 @@
     { \tl_gset:NV \g_zigma_meta_published_date_tl \l_tmpa_tl }
   \zigma_apply_if_present:nn {metadata.published.venue}
     { \tl_gset:NV \g_zigma_meta_published_venue_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.published.title}
+    { \tl_gset:NV \g_zigma_meta_published_title_tl \l_tmpa_tl }
   \zigma_apply_if_present:nn {metadata.published.url}
     { \tl_gset:NV \g_zigma_meta_published_url_tl \l_tmpa_tl }
   \zigma_apply_if_present:nn {metadata.published.label}

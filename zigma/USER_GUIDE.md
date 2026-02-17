@@ -264,6 +264,7 @@ Document metadata for publishing:
   metadata.published.show = true,
   metadata.published.date = {2026-02-17},
   metadata.published.venue = {Rivista di Filosofia Tecnica},
+  metadata.published.title = {Per anni, quella che chiamiamo intelligenza artificiale},
   metadata.published.url = {https://rivista.example.org/articolo/123},
   % metadata.published.label = {Pubblicato il},   % optional text label
   

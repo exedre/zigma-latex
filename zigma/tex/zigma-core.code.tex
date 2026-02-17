@@ -84,6 +84,7 @@
 \bool_new:N \g_zigma_meta_published_show_bool
 \tl_new:N \g_zigma_meta_published_date_tl
 \tl_new:N \g_zigma_meta_published_venue_tl
+\tl_new:N \g_zigma_meta_published_title_tl
 \tl_new:N \g_zigma_meta_published_url_tl
 \tl_new:N \g_zigma_meta_published_label_tl
 \tl_new:N \g_zigma_meta_published_rendered_tl
@@ -198,6 +199,7 @@
 \bool_gset_false:N \g_zigma_meta_published_show_bool
 \tl_gset:Nn \g_zigma_meta_published_date_tl {}
 \tl_gset:Nn \g_zigma_meta_published_venue_tl {}
+\tl_gset:Nn \g_zigma_meta_published_title_tl {}
 \tl_gset:Nn \g_zigma_meta_published_url_tl {}
 \tl_gset:Nn \g_zigma_meta_published_label_tl {Pubblicato il}
 \tl_gset:Nn \g_zigma_meta_published_rendered_tl {}
@@ -632,34 +634,66 @@
           { \tl_set:NV \l_tmpa_tl \g_zigma_meta_published_tl }
           { \tl_set:NV \l_tmpa_tl \g_zigma_meta_published_date_tl }
 
-        % Venue text with optional link
+        % Venue text:
+        % - if title is present, keep venue plain (URL will be on title)
+        % - if title is absent, venue may be linked
         \tl_if_empty:NF \g_zigma_meta_published_venue_tl
           {
-            \tl_if_empty:NTF \g_zigma_meta_published_url_tl
-              { \tl_set:NV \l_tmpb_tl \g_zigma_meta_published_venue_tl }
+            \tl_if_empty:NTF \g_zigma_meta_published_title_tl
               {
-                \tl_set:Nx \l_tmpb_tl
+                \tl_if_empty:NTF \g_zigma_meta_published_url_tl
+                  { \tl_set:NV \l_tmpb_tl \g_zigma_meta_published_venue_tl }
+                  {
+                    \tl_set:Nx \l_tmpb_tl
+                      {
+                        \exp_not:N \href
+                          { \tl_use:N \g_zigma_meta_published_url_tl }
+                          { \tl_use:N \g_zigma_meta_published_venue_tl }
+                      }
+                  }
+              }
+              { \tl_set:NV \l_tmpb_tl \g_zigma_meta_published_venue_tl }
+          }
+
+        % Title text in italics; if URL exists and title is present, link the title.
+        \tl_if_empty:NF \g_zigma_meta_published_title_tl
+          {
+            \tl_if_empty:NTF \g_zigma_meta_published_url_tl
+              {
+                \tl_set:Nx \l_tmpd_tl
+                  { \exp_not:N \emph { \tl_use:N \g_zigma_meta_published_title_tl } }
+              }
+              {
+                \tl_set:Nx \l_tmpd_tl
                   {
                     \exp_not:N \href
                       { \tl_use:N \g_zigma_meta_published_url_tl }
-                      { \tl_use:N \g_zigma_meta_published_venue_tl }
+                      { \exp_not:N \emph { \tl_use:N \g_zigma_meta_published_title_tl } }
                   }
               }
           }
 
-        % Sentence: "Pubblicato il <date> su <venue>"
+        % Sentence: "Pubblicato il <date> su <venue>, <title>"
         \tl_if_empty:NTF \l_tmpa_tl
           {
             \tl_if_empty:NF \l_tmpb_tl
               { \tl_set:Nx \l_tmpc_tl { Pubblicato~su~\exp_not:V \l_tmpb_tl } }
+            \tl_if_empty:NF \l_tmpd_tl
+              {
+                \tl_if_empty:NTF \l_tmpc_tl
+                  { \tl_set:Nx \l_tmpc_tl { \exp_not:V \l_tmpd_tl } }
+                  { \tl_put_right:Nx \l_tmpc_tl { ,~\exp_not:V \l_tmpd_tl } }
+              }
           }
           {
-            \tl_set:Nx \l_tmpd_tl
+            \tl_set:Nx \l_tmpe_tl
               { \tl_trim_spaces:n { \tl_use:N \g_zigma_meta_published_label_tl } }
             \tl_set:Nx \l_tmpc_tl
-              { \exp_not:V \l_tmpd_tl \c_space_tl \exp_not:V \l_tmpa_tl }
+              { \exp_not:V \l_tmpe_tl \c_space_tl \exp_not:V \l_tmpa_tl }
             \tl_if_empty:NF \l_tmpb_tl
               { \tl_put_right:Nx \l_tmpc_tl { ~su~\exp_not:V \l_tmpb_tl } }
+            \tl_if_empty:NF \l_tmpd_tl
+              { \tl_put_right:Nx \l_tmpc_tl { ,~\exp_not:V \l_tmpd_tl } }
           }
 
         \tl_gset:NV \g_zigma_meta_published_rendered_tl \l_tmpc_tl
@@ -744,6 +778,7 @@
     \zigma_log:x { metadata.published.show = \bool_if:NTF \g_zigma_meta_published_show_bool {true}{false} }
     \zigma_log:x { metadata.published.date = \tl_use:N \g_zigma_meta_published_date_tl }
     \zigma_log:x { metadata.published.venue= \tl_use:N \g_zigma_meta_published_venue_tl }
+    \zigma_log:x { metadata.published.title= \tl_use:N \g_zigma_meta_published_title_tl }
     \zigma_log:x { metadata.published.url  = \tl_use:N \g_zigma_meta_published_url_tl }
     \zigma_log:x { metadata.published.label= \tl_use:N \g_zigma_meta_published_label_tl }
     \zigma_log:x { metadata.published.final= \tl_use:N \g_zigma_meta_published_rendered_tl }
