@@ -522,14 +522,15 @@ Research shows \zigmacite{key1}...
 
 **Features**: Green theme (#096), IEEE bibliography, smart headers (small.title or title + lead author)
 
-Il template espone anche un helper per l'incipit con drop cap:
+Per l'incipit usa il comando globale `\zdropcap`, pensato per il flusso di produzione:
 
 ```latex
+\maketitle
 \section{Introduzione}
-\zigmailcincipit{L}{a cibernetica richiede un incipit ben riconoscibile.}
+\zdropcap Per anni, quella che chiamiamo intelligenza artificiale si e concentrata...
 ```
 
-Con `use.dropcap = false` lo stesso comando produce testo normale senza `\lettrine`.
+Con `use.dropcap = false` lo stesso comando produce testo normale (senza drop cap).
 
 #### IEEE Template
 ```latex

@@ -386,6 +386,43 @@
   }
 
 %% ============================================================================
+%% Public Drop Cap Command
+%% ============================================================================
+%%
+%% \zdropcap expects plain paragraph text and applies a drop cap to the first
+%% word of the paragraph. Intended usage:
+%%   \maketitle
+%%   \zdropcap Per anni, ...
+%%
+%% Behavior follows use.dropcap; when disabled it leaves the paragraph unchanged.
+%%
+\cs_new_protected:Npn \zigma_dropcap_paragraph:nn #1 #2
+  {
+    \bool_if:NTF \g_zigma_use_dropcap_bool
+      {
+        \tl_set:Nn \l_tmpa_tl {#1}
+        \tl_if_empty:NTF \l_tmpa_tl
+          { #2\par }
+          {
+            \tl_set:Nx \l_tmpb_tl { \tl_head:N \l_tmpa_tl }
+            \tl_set:Nx \l_tmpc_tl { \tl_tail:N \l_tmpa_tl }
+            \cs_if_exist:NTF \lettrine
+              { \lettrine[lines=3]{\l_tmpb_tl}{\l_tmpc_tl}\c_space_tl #2\par }
+              { #1~#2\par }
+          }
+      }
+      { #1~#2\par }
+  }
+
+\cs_new_protected:Npn \zigma_dropcap_capture:w #1 #2 \par
+  {
+    \zigma_dropcap_paragraph:nn {#1} {#2}
+  }
+
+\NewDocumentCommand \zdropcap {}
+  { \zigma_dropcap_capture:w }
+
+%% ============================================================================
 %% License Rendering (canonical metadata output)
 %% ============================================================================
 %%
