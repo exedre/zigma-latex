@@ -315,6 +315,8 @@ Enable or disable features:
   % Display options
   show.metadata = false,    % Hide metadata section
   show.abstract = true,     % Show abstract (default)
+  use.dropcap = false,      % Disable drop caps (\lettrine rendered as plain text)
+  layout.vertical.fill = {ragged}, % ragged | flush (column/page vertical fill)
   show.toc = false,         % Table of contents
   
   % Debug options

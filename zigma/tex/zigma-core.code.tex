@@ -139,6 +139,7 @@
 \bool_new:N \g_zigma_show_abstract_bool
 \bool_new:N \g_zigma_use_dropcap_bool
 \bool_new:N \g_zigma_show_toc_bool
+\tl_new:N \g_zigma_layout_vertical_fill_tl
 \bool_new:N \g_zigma_debug_colors_bool
 \bool_new:N \g_zigma_debug_bool
 \bool_new:N \g_zigma_validate_bool
@@ -241,6 +242,7 @@
 \bool_gset_true:N  \g_zigma_show_abstract_bool
 \bool_gset_true:N  \g_zigma_use_dropcap_bool
 \bool_gset_false:N \g_zigma_show_toc_bool
+\tl_gset:Nn \g_zigma_layout_vertical_fill_tl {ragged}
 \bool_gset_false:N \g_zigma_debug_colors_bool
 \bool_gset_false:N \g_zigma_debug_bool
 \bool_gset_false:N \g_zigma_validate_bool  % Default: no validation (performance)
@@ -281,6 +283,9 @@
 
 \msg_new:nnn { zigma } { unknown-links-style }
   { Unknown~links/style~'#1'.~Falling~back~to~'color'. }
+
+\msg_new:nnn { zigma } { unknown-vertical-fill }
+  { Unknown~layout/vertical/fill~'#1'.~Falling~back~to~'ragged'. }
 
 %% ============================================================================
 %% Link Styling (hyperref runtime policy)
@@ -342,6 +347,24 @@
               pdfborderstyle={/S/U/W 0.7}
             }
           }
+      }
+  }
+
+%% ============================================================================
+%% Vertical Fill Policy
+%% ============================================================================
+\cs_new_protected:Npn \zigma_apply_vertical_fill_policy:
+  {
+    \tl_set:Nx \l_tmpa_tl { \tl_lower_case:n { \tl_use:N \g_zigma_layout_vertical_fill_tl } }
+    \tl_trim_spaces:N \l_tmpa_tl
+    \str_case:VnF \l_tmpa_tl
+      {
+        {flush}  { \flushbottom }
+        {ragged} { \raggedbottom }
+      }
+      {
+        \msg_warning:nnx { zigma } { unknown-vertical-fill } { \tl_use:N \g_zigma_layout_vertical_fill_tl }
+        \raggedbottom
       }
   }
 
@@ -642,6 +665,7 @@
   \zigma_log:x { show.metadata  = \bool_if:NTF \g_zigma_show_metadata_bool {true}{false} }
   \zigma_log:x { show.abstract  = \bool_if:NTF \g_zigma_show_abstract_bool {true}{false} }
   \zigma_log:x { use.dropcap    = \bool_if:NTF \g_zigma_use_dropcap_bool {true}{false} }
+  \zigma_log:x { layout.vertical.fill = \tl_use:N \g_zigma_layout_vertical_fill_tl }
   \zigma_log:x { show.toc       = \bool_if:NTF \g_zigma_show_toc_bool {true}{false} }
   \zigma_log:x { debug.colors   = \bool_if:NTF \g_zigma_debug_colors_bool {true}{false} }
   \zigma_log:n { ===== ~ ZIGMA ~ STATE ~ DUMP ~ END ~ ===== }
@@ -670,6 +694,7 @@
     \zigma_log:x { show.metadata  = \bool_if:NTF \g_zigma_show_metadata_bool {true}{false} }
     \zigma_log:x { show.abstract  = \bool_if:NTF \g_zigma_show_abstract_bool {true}{false} }
     \zigma_log:x { use.dropcap    = \bool_if:NTF \g_zigma_use_dropcap_bool {true}{false} }
+    \zigma_log:x { layout.vertical.fill = \tl_use:N \g_zigma_layout_vertical_fill_tl }
     \zigma_log:x { show.toc       = \bool_if:NTF \g_zigma_show_toc_bool {true}{false} }
     \zigma_log:x { debug.colors   = \bool_if:NTF \g_zigma_debug_colors_bool {true}{false} }
     % metadata (selected)
