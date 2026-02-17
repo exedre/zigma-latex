@@ -276,7 +276,7 @@
     \tl_if_empty:NF \g_zigma_meta_revised_tl { \int_incr:N \l_tmpa_int }
     \tl_if_empty:NF \g_zigma_meta_accepted_tl { \int_incr:N \l_tmpa_int }
     \tl_if_empty:NF \g_zigma_meta_published_tl { \int_incr:N \l_tmpa_int }
-    \tl_if_empty:NF \g_zigma_meta_license_tl { \int_incr:N \l_tmpa_int }
+    \tl_if_empty:NF \g_zigma_meta_license_rendered_tl { \int_incr:N \l_tmpa_int }
     
     \int_compare:nNnT { \l_tmpa_int } > { 0 }
       {
@@ -332,11 +332,11 @@
           }
         
         % License
-        \tl_if_empty:NF \g_zigma_meta_license_tl
+        \tl_if_empty:NF \g_zigma_meta_license_rendered_tl
           {
             \vspace{0.5em}
             \noindent
-            \g_zigma_meta_license_tl
+            \g_zigma_meta_license_rendered_tl
             \par
           }
         

@@ -263,15 +263,25 @@ Document metadata for publishing:
   metadata.accepted = {2024-03-10},
   metadata.published = {2024-04-01},
   
-  % Keywords and licensing
+  % Keywords
   metadata.keywords = {quantum mechanics, particle physics, LHC},
-  metadata.license = {CC-BY-4.0},
+  
+  % License (structured)
+  metadata.license.type = {cc},              % copyright | gnu | cc | custom
+  metadata.license.id = {CC-BY-4.0},
+  metadata.license.note = {Copyright (c) 2026 by the authors.},
+  % metadata.license.url = {...}             % optional, auto-filled for known ids
+  
+  % Legacy fallback (still supported)
+  % metadata.license = {This work is licensed under CC BY 4.0.},
   
   % URL display
   metadata.url = {https://journal.org/article/123},
   metadata.url.show = {true},
 }
 ```
+
+See `docs/LICENSE_COMPLIANCE.md` for full compliance rules and fallback behavior.
 
 ### Labels (Localization)
 

@@ -390,7 +390,8 @@
         \tl_if_empty:NF \g_zigma_meta_received_tl { \int_incr:N \l__zigma_rho_meta_count_int }
         \tl_if_empty:NF \g_zigma_meta_revised_tl { \int_incr:N \l__zigma_rho_meta_count_int }
         \tl_if_empty:NF \g_zigma_meta_accepted_tl { \int_incr:N \l__zigma_rho_meta_count_int }
-        \tl_if_empty:NF \g_zigma_meta_published_tl { \int_incr:N \l__zigma_rho_meta_count_int }
+            \tl_if_empty:NF \g_zigma_meta_published_tl { \int_incr:N \l__zigma_rho_meta_count_int }
+            \tl_if_empty:NF \g_zigma_meta_license_rendered_tl { \int_incr:N \l__zigma_rho_meta_count_int }
         
         % Also check for corresponding authors
         \seq_map_inline:Nn \g_zigma_author_ids_seq
@@ -473,10 +474,10 @@
               }
             
             % License
-            \tl_if_empty:NF \g_zigma_meta_license_tl
+            \tl_if_empty:NF \g_zigma_meta_license_rendered_tl
               {
                 \vskip3pt
-                \g_zigma_meta_license_tl\par
+                \g_zigma_meta_license_rendered_tl\par
               }
             }
             \vskip1pt

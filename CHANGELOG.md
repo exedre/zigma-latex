@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+### Added
+- Structured metadata license model:
+  - `metadata.license.type`
+  - `metadata.license.id`
+  - `metadata.license.holder`
+  - `metadata.license.year`
+  - `metadata.license.url`
+  - `metadata.license.note`
+- Canonical license resolver with support for `copyright`, `gnu`, `cc`, and `custom`.
+- New compliance document: `docs/LICENSE_COMPLIANCE.md`.
+- New metadata tests:
+  - `tests/features/metadata/test-license-legacy.tex`
+  - `tests/features/metadata/test-license-cc.tex`
+  - `tests/features/metadata/test-license-gnu.tex`
+  - `tests/features/metadata/test-license-copyright.tex`
+
+### Changed
+- All renderers now consume a single canonical license text computed in core state.
+- Legacy top-level keys (`doi`, `received`, `revised`, `accepted`, `published`, `license`) now map directly to `metadata.*` state fields.
+
 ## [1.1.0] - 2026-02-16
 
 **Refinement & Documentation Enhancement** 🎯

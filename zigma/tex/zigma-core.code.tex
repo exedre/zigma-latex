@@ -85,6 +85,13 @@
 \tl_new:N \g_zigma_meta_doi_tl
 \tl_new:N \g_zigma_meta_uuid_tl
 \tl_new:N \g_zigma_meta_license_tl
+\tl_new:N \g_zigma_meta_license_type_tl
+\tl_new:N \g_zigma_meta_license_id_tl
+\tl_new:N \g_zigma_meta_license_holder_tl
+\tl_new:N \g_zigma_meta_license_year_tl
+\tl_new:N \g_zigma_meta_license_url_tl
+\tl_new:N \g_zigma_meta_license_note_tl
+\tl_new:N \g_zigma_meta_license_rendered_tl
 \tl_new:N \g_zigma_meta_keywords_tl
 \tl_new:N \g_zigma_meta_url_tl
 \tl_new:N \g_zigma_meta_url_show_tl
@@ -177,6 +184,13 @@
 \tl_gset:Nn \g_zigma_meta_doi_tl           {}
 \tl_gset:Nn \g_zigma_meta_uuid_tl          {}
 \tl_gset:Nn \g_zigma_meta_license_tl       {}
+\tl_gset:Nn \g_zigma_meta_license_type_tl  {}
+\tl_gset:Nn \g_zigma_meta_license_id_tl    {}
+\tl_gset:Nn \g_zigma_meta_license_holder_tl {}
+\tl_gset:Nn \g_zigma_meta_license_year_tl  {}
+\tl_gset:Nn \g_zigma_meta_license_url_tl   {}
+\tl_gset:Nn \g_zigma_meta_license_note_tl  {}
+\tl_gset:Nn \g_zigma_meta_license_rendered_tl {}
 \tl_gset:Nn \g_zigma_meta_keywords_tl      {}
 \tl_gset:Nn \g_zigma_meta_url_tl           {}
 \tl_gset:Nn \g_zigma_meta_url_show_tl      {false}
@@ -234,6 +248,203 @@
   { 
     Available~templates:~#2.\\
     #3
+  }
+
+\msg_new:nnn { zigma } { unknown-license-type }
+  { Unknown~metadata/license/type~'#1'.~Falling~back~to~custom~license~text. }
+
+\msg_new:nnn { zigma } { unknown-license-id }
+  { Unknown~license~id~'#1'~for~type~'#2'.~Using~a~generic~label. }
+
+%% ============================================================================
+%% License Rendering (canonical metadata output)
+%% ============================================================================
+%%
+%% The final license text shown in renderers is always:
+%%   \g_zigma_meta_license_rendered_tl
+%%
+%% Inputs:
+%% - Legacy: metadata.license (free text)
+%% - Structured: metadata.license.type/id/holder/year/url/note
+%%
+\cs_new_protected:Npn \zigma_meta_license_render_build:
+  {
+    \tl_clear:N \g_zigma_meta_license_rendered_tl
+    \tl_clear:N \l_tmpa_tl
+    \tl_clear:N \l_tmpb_tl
+    \tl_clear:N \l_tmpc_tl
+    \tl_clear:N \l_tmpd_tl
+
+    % Canonicalized type (lowercase)
+    \tl_set:Nx \l_tmpa_tl { \tl_lower_case:n { \tl_use:N \g_zigma_meta_license_type_tl } }
+    \tl_trim_spaces:N \l_tmpa_tl
+
+    % If type not provided, infer from legacy/free fields.
+    \tl_if_empty:NT \l_tmpa_tl
+      {
+        \tl_if_empty:NF \g_zigma_meta_license_tl
+          { \tl_set:Nn \l_tmpa_tl { custom } }
+        \tl_if_empty:NT \l_tmpa_tl
+          {
+            \tl_if_empty:NF \g_zigma_meta_license_id_tl
+              {
+                \tl_set:Nx \l_tmpb_tl { \tl_lower_case:n { \tl_use:N \g_zigma_meta_license_id_tl } }
+                \str_if_in:VnTF \l_tmpb_tl { cc }
+                  { \tl_set:Nn \l_tmpa_tl { cc } }
+                  {
+                    \str_if_in:VnTF \l_tmpb_tl { gpl }
+                      { \tl_set:Nn \l_tmpa_tl { gnu } }
+                      { \tl_set:Nn \l_tmpa_tl { custom } }
+                  }
+              }
+          }
+      }
+
+    % Type-specific canonical rendering
+    \tl_if_empty:NF \l_tmpa_tl
+      {
+        \str_case:VnF \l_tmpa_tl
+          {
+            {copyright}
+              {
+                \tl_set:Nn \l_tmpb_tl { \the\year }
+                \tl_if_empty:NF \g_zigma_meta_license_year_tl
+                  { \tl_set:NV \l_tmpb_tl \g_zigma_meta_license_year_tl }
+
+                \tl_set:Nn \l_tmpc_tl { the~author(s) }
+                \tl_if_empty:NF \g_zigma_meta_license_holder_tl
+                  { \tl_set:NV \l_tmpc_tl \g_zigma_meta_license_holder_tl }
+
+                \tl_gset:Nx \g_zigma_meta_license_rendered_tl
+                  { Copyright~(c)~\l_tmpb_tl~\l_tmpc_tl.~All~rights~reserved. }
+              }
+            {cc}
+              {
+                \tl_set:Nx \l_tmpb_tl { \tl_lower_case:n { \tl_use:N \g_zigma_meta_license_id_tl } }
+                \tl_trim_spaces:N \l_tmpb_tl
+                \tl_clear:N \l_tmpc_tl
+                \tl_clear:N \l_tmpd_tl
+
+                \str_case:VnF \l_tmpb_tl
+                  {
+                    {cc-by-4.0}
+                      {
+                        \tl_set:Nn \l_tmpc_tl { Creative~Commons~Attribution~4.0~International~(CC~BY~4.0) }
+                        \tl_set:Nn \l_tmpd_tl { https://creativecommons.org/licenses/by/4.0/ }
+                      }
+                    {cc-by-sa-4.0}
+                      {
+                        \tl_set:Nn \l_tmpc_tl { Creative~Commons~Attribution-ShareAlike~4.0~International~(CC~BY-SA~4.0) }
+                        \tl_set:Nn \l_tmpd_tl { https://creativecommons.org/licenses/by-sa/4.0/ }
+                      }
+                    {cc-by-nc-4.0}
+                      {
+                        \tl_set:Nn \l_tmpc_tl { Creative~Commons~Attribution-NonCommercial~4.0~International~(CC~BY-NC~4.0) }
+                        \tl_set:Nn \l_tmpd_tl { https://creativecommons.org/licenses/by-nc/4.0/ }
+                      }
+                    {cc0-1.0}
+                      {
+                        \tl_set:Nn \l_tmpc_tl { Creative~Commons~CC0~1.0~Universal~(CC0~1.0) }
+                        \tl_set:Nn \l_tmpd_tl { https://creativecommons.org/publicdomain/zero/1.0/ }
+                      }
+                  }
+                  {
+                    \tl_if_empty:NTF \l_tmpb_tl
+                      {
+                        \tl_set:Nn \l_tmpc_tl { Creative~Commons~license }
+                      }
+                      {
+                        \msg_warning:nnxx { zigma } { unknown-license-id } { \tl_use:N \g_zigma_meta_license_id_tl } { cc }
+                        \tl_set:Nx \l_tmpc_tl { Creative~Commons~license~(\tl_use:N \g_zigma_meta_license_id_tl) }
+                      }
+                  }
+
+                \tl_gset:Nx \g_zigma_meta_license_rendered_tl
+                  { This~work~is~licensed~under~\l_tmpc_tl. }
+
+                \tl_if_empty:NT \g_zigma_meta_license_url_tl
+                  { \tl_if_empty:NF \l_tmpd_tl { \tl_gset:NV \g_zigma_meta_license_url_tl \l_tmpd_tl } }
+              }
+            {gnu}
+              {
+                \tl_set:Nx \l_tmpb_tl { \tl_lower_case:n { \tl_use:N \g_zigma_meta_license_id_tl } }
+                \tl_trim_spaces:N \l_tmpb_tl
+                \tl_clear:N \l_tmpc_tl
+                \tl_clear:N \l_tmpd_tl
+
+                \str_case:VnF \l_tmpb_tl
+                  {
+                    {gpl-3.0-or-later}
+                      {
+                        \tl_set:Nn \l_tmpc_tl { GNU~General~Public~License~v3.0~or~later }
+                        \tl_set:Nn \l_tmpd_tl { https://www.gnu.org/licenses/gpl-3.0.html }
+                      }
+                    {gpl-2.0-or-later}
+                      {
+                        \tl_set:Nn \l_tmpc_tl { GNU~General~Public~License~v2.0~or~later }
+                        \tl_set:Nn \l_tmpd_tl { https://www.gnu.org/licenses/old-licenses/gpl-2.0.html }
+                      }
+                    {lgpl-3.0-or-later}
+                      {
+                        \tl_set:Nn \l_tmpc_tl { GNU~Lesser~General~Public~License~v3.0~or~later }
+                        \tl_set:Nn \l_tmpd_tl { https://www.gnu.org/licenses/lgpl-3.0.html }
+                      }
+                    {agpl-3.0-or-later}
+                      {
+                        \tl_set:Nn \l_tmpc_tl { GNU~Affero~General~Public~License~v3.0~or~later }
+                        \tl_set:Nn \l_tmpd_tl { https://www.gnu.org/licenses/agpl-3.0.html }
+                      }
+                  }
+                  {
+                    \tl_if_empty:NTF \l_tmpb_tl
+                      { \tl_set:Nn \l_tmpc_tl { GNU~license } }
+                      {
+                        \msg_warning:nnxx { zigma } { unknown-license-id } { \tl_use:N \g_zigma_meta_license_id_tl } { gnu }
+                        \tl_set:Nx \l_tmpc_tl { GNU~license~(\tl_use:N \g_zigma_meta_license_id_tl) }
+                      }
+                  }
+
+                \tl_gset:Nx \g_zigma_meta_license_rendered_tl
+                  { Released~under~the~\l_tmpc_tl. }
+
+                \tl_if_empty:NT \g_zigma_meta_license_url_tl
+                  { \tl_if_empty:NF \l_tmpd_tl { \tl_gset:NV \g_zigma_meta_license_url_tl \l_tmpd_tl } }
+              }
+            {custom}
+              {
+                \tl_if_empty:NTF \g_zigma_meta_license_tl
+                  {
+                    \tl_if_empty:NTF \g_zigma_meta_license_id_tl
+                      { \tl_clear:N \g_zigma_meta_license_rendered_tl }
+                      { \tl_gset:Nx \g_zigma_meta_license_rendered_tl { License:~\tl_use:N \g_zigma_meta_license_id_tl. } }
+                  }
+                  { \tl_gset:NV \g_zigma_meta_license_rendered_tl \g_zigma_meta_license_tl }
+              }
+          }
+          {
+            \msg_warning:nnx { zigma } { unknown-license-type } { \tl_use:N \g_zigma_meta_license_type_tl }
+            \tl_if_empty:NTF \g_zigma_meta_license_tl
+              { \tl_clear:N \g_zigma_meta_license_rendered_tl }
+              { \tl_gset:NV \g_zigma_meta_license_rendered_tl \g_zigma_meta_license_tl }
+          }
+      }
+
+    % Optional extra note/url shared by all modes.
+    \tl_if_empty:NF \g_zigma_meta_license_note_tl
+      {
+        \tl_gput_right:Nx \g_zigma_meta_license_rendered_tl
+          { ~\tl_use:N \g_zigma_meta_license_note_tl }
+      }
+    \tl_if_empty:NF \g_zigma_meta_license_url_tl
+      {
+        \tl_set:NV \l_tmpa_tl \g_zigma_meta_license_rendered_tl
+        \tl_gset:Nx \g_zigma_meta_license_rendered_tl
+          {
+            \exp_not:N \href
+              { \tl_use:N \g_zigma_meta_license_url_tl }
+              { \exp_not:V \l_tmpa_tl }
+          }
+      }
   }
 
 \cs_new_protected:Npn \zigma_log_state: {
@@ -301,6 +512,13 @@
     \zigma_log:x { metadata.doi           = \tl_use:N \g_zigma_meta_doi_tl }
     \zigma_log:x { metadata.uuid          = \tl_use:N \g_zigma_meta_uuid_tl }
     \zigma_log:x { metadata.license       = \tl_use:N \g_zigma_meta_license_tl }
+    \zigma_log:x { metadata.license.type  = \tl_use:N \g_zigma_meta_license_type_tl }
+    \zigma_log:x { metadata.license.id    = \tl_use:N \g_zigma_meta_license_id_tl }
+    \zigma_log:x { metadata.license.holder= \tl_use:N \g_zigma_meta_license_holder_tl }
+    \zigma_log:x { metadata.license.year  = \tl_use:N \g_zigma_meta_license_year_tl }
+    \zigma_log:x { metadata.license.url   = \tl_use:N \g_zigma_meta_license_url_tl }
+    \zigma_log:x { metadata.license.note  = \tl_use:N \g_zigma_meta_license_note_tl }
+    \zigma_log:x { metadata.license.final = \tl_use:N \g_zigma_meta_license_rendered_tl }
     \zigma_log:x { metadata.keywords      = \tl_use:N \g_zigma_meta_keywords_tl }
     \zigma_log:x { metadata.url           = \tl_use:N \g_zigma_meta_url_tl }
     \zigma_log:x { metadata.url.show      = \tl_use:N \g_zigma_meta_url_show_tl }

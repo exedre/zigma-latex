@@ -167,6 +167,12 @@
   metadata.doi           .tl_set:N = \g_zigma_meta_doi_tl,
   metadata.uuid          .tl_set:N = \g_zigma_meta_uuid_tl,
   metadata.license       .tl_set:N = \g_zigma_meta_license_tl,
+  metadata.license.type  .tl_set:N = \g_zigma_meta_license_type_tl,
+  metadata.license.id    .tl_set:N = \g_zigma_meta_license_id_tl,
+  metadata.license.holder .tl_set:N = \g_zigma_meta_license_holder_tl,
+  metadata.license.year  .tl_set:N = \g_zigma_meta_license_year_tl,
+  metadata.license.url   .tl_set:N = \g_zigma_meta_license_url_tl,
+  metadata.license.note  .tl_set:N = \g_zigma_meta_license_note_tl,
   metadata.keywords      .tl_set:N = \g_zigma_meta_keywords_tl,
   metadata.url           .tl_set:N = \g_zigma_meta_url_tl,
   metadata.url.show      .tl_set:N = \g_zigma_meta_url_show_tl,
@@ -291,6 +297,18 @@
     { \tl_gset:NV \g_zigma_meta_uuid_tl \l_tmpa_tl }
   \zigma_apply_if_present:nn {metadata.license}
     { \tl_gset:NV \g_zigma_meta_license_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.license.type}
+    { \tl_gset:NV \g_zigma_meta_license_type_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.license.id}
+    { \tl_gset:NV \g_zigma_meta_license_id_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.license.holder}
+    { \tl_gset:NV \g_zigma_meta_license_holder_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.license.year}
+    { \tl_gset:NV \g_zigma_meta_license_year_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.license.url}
+    { \tl_gset:NV \g_zigma_meta_license_url_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {metadata.license.note}
+    { \tl_gset:NV \g_zigma_meta_license_note_tl \l_tmpa_tl }
   \zigma_apply_if_present:nn {metadata.keywords}
     { \tl_gset:NV \g_zigma_meta_keywords_tl \l_tmpa_tl }
   \zigma_apply_if_present:nn {metadata.url}
@@ -422,10 +440,13 @@
         \zigma_validate_author_affils:
       }
 
-    % Step 4: Display configuration state (debug mode only)
+    % Step 4: Build canonical license text (used by all renderers)
+    \zigma_meta_license_render_build:
+
+    % Step 5: Display configuration state (debug mode only)
     \bool_if:NT \g_zigma_debug_bool { \zigma_log_state_soft: }
     
-    % Step 5: Display registered authors (debug mode only)
+    % Step 6: Display registered authors (debug mode only)
     \bool_if:NT \g_zigma_debug_bool { \zigma_authors_show: }
 
   }
@@ -443,12 +464,12 @@
 %% Rho-specific configuration keys
 \keys_define:nn { zigma/setup }
   {
-    doi .tl_gset:N = \g_zigma_doi_tl,
-    received .tl_gset:N = \g_zigma_received_tl,
-    revised .tl_gset:N = \g_zigma_revised_tl,
-    accepted .tl_gset:N = \g_zigma_accepted_tl,
-    published .tl_gset:N = \g_zigma_published_tl,
-    license .tl_gset:N = \g_zigma_license_tl,
+    doi .tl_gset:N = \g_zigma_meta_doi_tl,
+    received .tl_gset:N = \g_zigma_meta_received_tl,
+    revised .tl_gset:N = \g_zigma_meta_revised_tl,
+    accepted .tl_gset:N = \g_zigma_meta_accepted_tl,
+    published .tl_gset:N = \g_zigma_meta_published_tl,
+    license .tl_gset:N = \g_zigma_meta_license_tl,
     institution .tl_gset:N = \g_zigma_institution_tl,
     
     % Bibliography configuration
