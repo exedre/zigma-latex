@@ -137,6 +137,12 @@
   color.main.rgb  .code:n = { \zigma_prop_put:nn {color.main.rgb}{#1} },
   color.main.name .code:n = { \zigma_prop_put:nn {color.main.name}{#1} },
 
+  % Link styling
+  links.style         .tl_set:N = \g_zigma_links_style_tl,
+  links.url.color     .tl_set:N = \g_zigma_links_url_color_tl,
+  links.url.underline .bool_set:N = \g_zigma_links_url_underline_bool,
+  links.url.underline .initial:n  = false,
+
   % Journal
   journal.name     .tl_set:N = \g_zigma_journal_name_tl,
   journal.url      .tl_set:N = \g_zigma_journal_url_tl,
@@ -255,6 +261,12 @@
     { \tl_gset:NV \g_zigma_color_box_bg_tl \l_tmpa_tl }
   \zigma_apply_if_present:nn {color.box.line}
     { \tl_gset:NV \g_zigma_color_box_line_tl \l_tmpa_tl }
+
+  % Links
+  \zigma_apply_if_present:nn {links.style}
+    { \tl_gset:NV \g_zigma_links_style_tl \l_tmpa_tl }
+  \zigma_apply_if_present:nn {links.url.color}
+    { \tl_gset:NV \g_zigma_links_url_color_tl \l_tmpa_tl }
   
   % Journal
   \zigma_apply_if_present:nn {journal.name}
@@ -440,13 +452,16 @@
         \zigma_validate_author_affils:
       }
 
-    % Step 4: Build canonical license text (used by all renderers)
+    % Step 4: Apply hyperlink visual policy (no URL boxes + style from setup)
+    \zigma_apply_link_style:
+
+    % Step 5: Build canonical license text (used by all renderers)
     \zigma_meta_license_render_build:
 
-    % Step 5: Display configuration state (debug mode only)
+    % Step 6: Display configuration state (debug mode only)
     \bool_if:NT \g_zigma_debug_bool { \zigma_log_state_soft: }
     
-    % Step 6: Display registered authors (debug mode only)
+    % Step 7: Display registered authors (debug mode only)
     \bool_if:NT \g_zigma_debug_bool { \zigma_authors_show: }
 
   }

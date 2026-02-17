@@ -319,6 +319,23 @@ Enable or disable features:
 }
 ```
 
+### Link Styling (No Blue Boxes)
+
+Control hyperlink appearance from `\zigmasetup`:
+
+```latex
+\zigmasetup{
+  links.style = {color},          % color | mono | hidden
+  links.url.color = {zigma-main}, % used when style=color
+  links.url.underline = {false},  % optional underline mode
+}
+```
+
+Behavior:
+- `links.style=color`: clickable links with chosen color, no boxes
+- `links.style=mono`: clickable black links, no boxes
+- `links.style=hidden`: clickable links with hidden visual style
+
 ---
 
 ## Advanced Features

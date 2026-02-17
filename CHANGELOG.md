@@ -19,6 +19,13 @@ All notable changes to this project are documented in this file.
   - `tests/features/metadata/test-license-cc.tex`
   - `tests/features/metadata/test-license-gnu.tex`
   - `tests/features/metadata/test-license-copyright.tex`
+- Hyperlink styling keys in `\zigmasetup`:
+  - `links.style`
+  - `links.url.color`
+  - `links.url.underline`
+- New renderer tests:
+  - `tests/renderers/article/test-links-color.tex`
+  - `tests/renderers/article/test-links-hidden.tex`
 
 ### Changed
 - All renderers now consume a single canonical license text computed in core state.

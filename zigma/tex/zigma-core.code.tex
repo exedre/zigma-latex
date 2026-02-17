@@ -117,6 +117,14 @@
 \tl_new:N \g_zigma_label_note_tl
 
 %% ============================================================================
+%% State Variables - Link Styling
+%% ============================================================================
+
+\tl_new:N \g_zigma_links_style_tl
+\tl_new:N \g_zigma_links_url_color_tl
+\bool_new:N \g_zigma_links_url_underline_bool
+
+%% ============================================================================
 %% State Variables - Toggles (native booleans)
 %% ============================================================================
 
@@ -213,6 +221,11 @@
 \tl_gset:Nn \g_zigma_label_information_tl {}
 \tl_gset:Nn \g_zigma_label_note_tl        {}
 
+% Link styling defaults
+\tl_gset:Nn \g_zigma_links_style_tl       {color}
+\tl_gset:Nn \g_zigma_links_url_color_tl   {zigma-accent}
+\bool_gset_false:N \g_zigma_links_url_underline_bool
+
 % Toggles (native booleans with defaults)
 \bool_gset_false:N \g_zigma_show_metadata_bool
 \bool_gset_true:N  \g_zigma_show_abstract_bool
@@ -255,6 +268,72 @@
 
 \msg_new:nnn { zigma } { unknown-license-id }
   { Unknown~license~id~'#1'~for~type~'#2'.~Using~a~generic~label. }
+
+\msg_new:nnn { zigma } { unknown-links-style }
+  { Unknown~links/style~'#1'.~Falling~back~to~'color'. }
+
+%% ============================================================================
+%% Link Styling (hyperref runtime policy)
+%% ============================================================================
+
+\cs_new_protected:Npn \zigma_apply_link_style:
+  {
+    \cs_if_exist:NT \hypersetup
+      {
+        % Never render boxed URL/link borders by default.
+        \hypersetup{pdfborder={0 0 0}}
+
+        \tl_set:Nx \l_tmpa_tl { \tl_lower_case:n { \tl_use:N \g_zigma_links_style_tl } }
+        \tl_trim_spaces:N \l_tmpa_tl
+
+        \str_case:VnF \l_tmpa_tl
+          {
+            {color}
+              {
+                \exp_args:Nx \hypersetup{
+                  colorlinks=true,
+                  urlcolor=\tl_use:N \g_zigma_links_url_color_tl,
+                  linkcolor=\tl_use:N \g_zigma_links_url_color_tl,
+                  citecolor=\tl_use:N \g_zigma_links_url_color_tl
+                }
+              }
+            {mono}
+              {
+                \hypersetup{
+                  colorlinks=true,
+                  urlcolor=black,
+                  linkcolor=black,
+                  citecolor=black
+                }
+              }
+            {hidden}
+              {
+                \hypersetup{
+                  hidelinks,
+                  colorlinks=false
+                }
+              }
+          }
+          {
+            \msg_warning:nnx { zigma } { unknown-links-style } { \tl_use:N \g_zigma_links_style_tl }
+            \exp_args:Nx \hypersetup{
+              colorlinks=true,
+              urlcolor=\tl_use:N \g_zigma_links_url_color_tl,
+              linkcolor=\tl_use:N \g_zigma_links_url_color_tl,
+              citecolor=\tl_use:N \g_zigma_links_url_color_tl
+            }
+          }
+
+        \bool_if:NT \g_zigma_links_url_underline_bool
+          {
+            \hypersetup{
+              colorlinks=false,
+              pdfborder={0 0 1},
+              pdfborderstyle={/S/U/W 0.7}
+            }
+          }
+      }
+  }
 
 %% ============================================================================
 %% License Rendering (canonical metadata output)
@@ -470,6 +549,9 @@
   \zigma_log:x { color.accent   = \tl_use:N \g_zigma_color_accent_tl }
   \zigma_log:x { color.box.bg   = \tl_use:N \g_zigma_color_box_bg_tl }
   \zigma_log:x { color.box.line = \tl_use:N \g_zigma_color_box_line_tl }
+  \zigma_log:x { links.style    = \tl_use:N \g_zigma_links_style_tl }
+  \zigma_log:x { links.url.color= \tl_use:N \g_zigma_links_url_color_tl }
+  \zigma_log:x { links.underline= \bool_if:NTF \g_zigma_links_url_underline_bool {true}{false} }
   \zigma_log:x { journal.name   = \tl_use:N \g_zigma_journal_name_tl }
   \zigma_log:x { journal.url    = \tl_use:N \g_zigma_journal_url_tl }
   \zigma_log:x { show.metadata  = \bool_if:NTF \g_zigma_show_metadata_bool {true}{false} }
@@ -495,6 +577,9 @@
     \zigma_log:x { fonts.serif    = \tl_use:N   \g_zigma_font_serif_tl }
     \zigma_log:x { fonts.sans     = \tl_use:N   \g_zigma_font_sans_tl }
     \zigma_log:x { fonts.mono     = \tl_use:N   \g_zigma_font_mono_tl }
+    \zigma_log:x { links.style    = \tl_use:N   \g_zigma_links_style_tl }
+    \zigma_log:x { links.url.color= \tl_use:N   \g_zigma_links_url_color_tl }
+    \zigma_log:x { links.underline= \bool_if:NTF \g_zigma_links_url_underline_bool {true}{false} }
     \zigma_log:x { journal.name   = \tl_use:N   \g_zigma_journal_name_tl }
     \zigma_log:x { journal.url    = \tl_use:N   \g_zigma_journal_url_tl }
     \zigma_log:x { show.metadata  = \bool_if:NTF \g_zigma_show_metadata_bool {true}{false} }
