@@ -167,15 +167,27 @@
       {
         \group_begin:
         \sffamily\bfseries\fontsize{8}{14}\selectfont
-        \tl_use:N \g_zigma_journal_name_tl
-        % Journal URL link if journal.url is set
-        \tl_if_empty:NF \g_zigma_journal_url_tl
+        % Journal name and URL link
+        \tl_if_empty:NTF \g_zigma_journal_url_tl
           {
-            \tl_if_empty:NF \g_zigma_journal_url_show_tl
+            % No URL: just render the name
+            \tl_use:N \g_zigma_journal_name_tl
+          }
+          {
+            % Has URL: check if we should make journal name clickable
+            \str_if_eq:VnTF \g_zigma_journal_url_show_tl { true }
               {
-                \c_space_tl
-                \exp_last_unbraced:NV \href \g_zigma_journal_url_tl
-                  { \tl_use:N \g_zigma_journal_url_show_tl }
+                % Make journal name clickable
+                \exp_args:NV \href \g_zigma_journal_url_tl { \tl_use:N \g_zigma_journal_name_tl }
+              }
+              {
+                % Journal name not clickable; check if we should add a symbol link
+                \tl_use:N \g_zigma_journal_name_tl
+                \tl_if_empty:NF \g_zigma_journal_url_show_tl
+                  {
+                    \nobreakspace
+                    \exp_args:NV \href \g_zigma_journal_url_tl { \tl_use:N \g_zigma_journal_url_show_tl }
+                  }
               }
           }
         \par
@@ -188,15 +200,27 @@
       {
         \group_begin:
         \zigma_rho_title_font:
-        \tl_use:N \g_zigma_title_tl
-        % Title URL link if title.url is set
-        \tl_if_empty:NF \g_zigma_title_url_tl
+        % Title text and URL link
+        \tl_if_empty:NTF \g_zigma_title_url_tl
           {
-            \tl_if_empty:NF \g_zigma_title_url_show_tl
+            % No URL: just render the title
+            \tl_use:N \g_zigma_title_tl
+          }
+          {
+            % Has URL: check if we should make title clickable
+            \str_if_eq:VnTF \g_zigma_title_url_show_tl { true }
               {
-                \c_space_tl
-                \exp_last_unbraced:NV \href \g_zigma_title_url_tl
-                  { \tl_use:N \g_zigma_title_url_show_tl }
+                % Make title clickable
+                \exp_args:NV \href \g_zigma_title_url_tl { \tl_use:N \g_zigma_title_tl }
+              }
+              {
+                % Title not clickable; check if we should add a symbol link
+                \tl_use:N \g_zigma_title_tl
+                \tl_if_empty:NF \g_zigma_title_url_show_tl
+                  {
+                    \nobreakspace
+                    \exp_args:NV \href \g_zigma_title_url_tl { \tl_use:N \g_zigma_title_url_show_tl }
+                  }
               }
           }
         \par
