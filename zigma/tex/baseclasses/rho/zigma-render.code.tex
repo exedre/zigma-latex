@@ -55,7 +55,7 @@
 %% ========================================================================
 
 % Define rho color (default: teal/cyan academic color)
-% Users can override with \definecolor{rhocolor}{RGB}{...} in document
+% Can be overridden via color.main in zigmasetup
 \providecolor{rhocolor}{RGB}{0, 120, 150}  % Teal academic color
 
 %% ========================================================================
@@ -63,10 +63,20 @@
 %% ========================================================================
 
 % Following rho.cls font specifications exactly
-\cs_new:Npn \zigma_rho_title_font: { \color{rhocolor}\sffamily\bfseries\fontsize{16}{22}\selectfont }
+\cs_new:Npn \zigma_rho_title_font: { 
+  \tl_if_empty:NF \g_zigma_color_main_tl 
+    { \color{\g_zigma_color_main_tl} }
+    { \color{rhocolor} }
+  \sffamily\bfseries\fontsize{16}{22}\selectfont 
+}
 \cs_new:Npn \zigma_rho_author_font: { \fontsize{9}{11}\bfseries\sffamily\selectfont }
 \cs_new:Npn \zigma_rho_affil_font: { \fontsize{7.5}{9}\itshape\selectfont }
-\cs_new:Npn \zigma_rho_abstract_head_font: { \color{rhocolor}\sffamily\fontsize{9}{11}\selectfont\bfseries }
+\cs_new:Npn \zigma_rho_abstract_head_font: { 
+  \tl_if_empty:NF \g_zigma_color_main_tl 
+    { \color{\g_zigma_color_main_tl} }
+    { \color{rhocolor} }
+  \sffamily\fontsize{9}{11}\selectfont\bfseries 
+}
 \cs_new:Npn \zigma_rho_abstract_font: { \color{black}\sffamily\linespread{1}\fontsize{8.5}{11}\selectfont }
 \cs_new:Npn \zigma_rho_keywords_font: { \sffamily\itshape\linespread{1}\fontsize{7.8}{9}\selectfont }
 \cs_new:Npn \zigma_rho_info_font: { \color{black}\sffamily\linespread{1}\fontsize{7.8}{9}\selectfont }
