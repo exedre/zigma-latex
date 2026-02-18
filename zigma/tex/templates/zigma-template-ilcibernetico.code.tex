@@ -57,6 +57,16 @@
         \tl_gset:Nn \g_zigma_rhocolor_tl { 009966 }
       }
     
+    % Box colors: light green background with darker green border
+    \tl_if_empty:NT \g_zigma_color_box_bg_tl
+      {
+        \tl_gset:Nn \g_zigma_color_box_bg_tl { rhocolor!18 }
+      }
+    \tl_if_empty:NT \g_zigma_color_box_line_tl
+      {
+        \tl_gset:Nn \g_zigma_color_box_line_tl { rhocolor!60 }
+      }
+    
     % Journal name
     \tl_if_empty:NT \g_zigma_journal_name_tl
       {
