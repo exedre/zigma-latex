@@ -133,6 +133,19 @@
   color.accent    .tl_set:N = \g_zigma_color_accent_tl,
   color.box.bg    .tl_set:N = \g_zigma_color_box_bg_tl,
   color.box.line  .tl_set:N = \g_zigma_color_box_line_tl,
+  color.text      .tl_set:N = \g_zigma_color_text_tl,
+  color.url       .tl_set:N = \g_zigma_color_url_tl,
+  color.journal   .tl_set:N = \g_zigma_color_journal_tl,
+  color.title     .tl_set:N = \g_zigma_color_title_tl,
+  color.subtitle  .tl_set:N = \g_zigma_color_subtitle_tl,
+  color.author    .tl_set:N = \g_zigma_color_author_tl,
+  color.keywords      .tl_set:N = \g_zigma_color_keywords_tl,
+  color.header.left   .tl_set:N = \g_zigma_color_header_left_tl,
+  color.header.center .tl_set:N = \g_zigma_color_header_center_tl,
+  color.header.right  .tl_set:N = \g_zigma_color_header_right_tl,
+  color.footer.left   .tl_set:N = \g_zigma_color_footer_left_tl,
+  color.footer.center .tl_set:N = \g_zigma_color_footer_center_tl,
+  color.footer.right  .tl_set:N = \g_zigma_color_footer_right_tl,
   % rgb/name placeholders retained
   color.main.rgb  .code:n = { \zigma_prop_put:nn {color.main.rgb}{#1} },
   color.main.name .code:n = { \zigma_prop_put:nn {color.main.name}{#1} },
@@ -471,6 +484,14 @@
       {
         \zigma_log:n { [ZIGMASETUP]~Running~affiliation~validation }
         \zigma_validate_author_affils:
+      }
+
+    % Step 3.5: Promote color.url to link color when links.url.color is untouched.
+    % This keeps links.url.color as the explicit override while making color.url effective.
+    \tl_if_empty:NF \g_zigma_color_url_tl
+      {
+        \tl_if_eq:NnT \g_zigma_links_url_color_tl { zigma-accent }
+          { \tl_gset:Nx \g_zigma_links_url_color_tl { \tl_use:N \g_zigma_color_url_tl } }
       }
 
     % Step 4: Apply hyperlink visual policy (no URL boxes + style from setup)

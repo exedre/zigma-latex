@@ -332,9 +332,9 @@ Control hyperlink appearance from `\zigmasetup`:
 
 ```latex
 \zigmasetup{
-  links.style = {color},          % color | mono | hidden
-  links.url.color = {zigma-main}, % used when style=color
-  links.url.underline = {false},  % optional underline mode
+  links.style = {color},         % color | mono | hidden
+  color.url = {zigma-main},      % used when style=color
+  links.url.underline = {false}, % optional underline mode
 }
 ```
 

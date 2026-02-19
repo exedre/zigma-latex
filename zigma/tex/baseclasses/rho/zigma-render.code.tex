@@ -63,13 +63,27 @@
 %% ========================================================================
 
 % Following rho.cls font specifications exactly
-\cs_new:Npn \zigma_rho_title_font: { 
-  \tl_if_empty:NF \g_zigma_color_main_tl 
-    { \color{\g_zigma_color_main_tl} }
-    { \color{rhocolor} }
-  \sffamily\bfseries\fontsize{16}{22}\selectfont 
+\cs_new:Npn \zigma_rho_title_font: {
+  \tl_if_empty:NF \g_zigma_color_title_tl
+    { \color{\g_zigma_color_title_tl} }
+    {
+      \tl_if_empty:NF \g_zigma_color_main_tl
+        { \color{\g_zigma_color_main_tl} }
+        { \color{rhocolor} }
+    }
+  \sffamily\bfseries\fontsize{16}{22}\selectfont
 }
-\cs_new:Npn \zigma_rho_author_font: { \fontsize{9}{11}\bfseries\sffamily\selectfont }
+\cs_new:Npn \zigma_rho_title_url_marker_font:
+  {
+    % Keep title style but render title.url.show marker slightly smaller.
+    \fontsize{13}{18}\selectfont
+  }
+\cs_new:Npn \zigma_rho_author_font: {
+  \tl_if_empty:NTF \g_zigma_color_author_tl
+    { \color{black} }
+    { \color{\g_zigma_color_author_tl} }
+  \fontsize{9}{11}\bfseries\sffamily\selectfont
+}
 \cs_new:Npn \zigma_rho_affil_font: { \fontsize{7.5}{9}\itshape\selectfont }
 \cs_new:Npn \zigma_rho_abstract_head_font: { 
   \tl_if_empty:NF \g_zigma_color_main_tl 
@@ -77,10 +91,107 @@
     { \color{rhocolor} }
   \sffamily\fontsize{9}{11}\selectfont\bfseries 
 }
-\cs_new:Npn \zigma_rho_abstract_font: { \color{black}\sffamily\linespread{1}\fontsize{8.5}{11}\selectfont }
-\cs_new:Npn \zigma_rho_keywords_font: { \sffamily\itshape\linespread{1}\fontsize{7.8}{9}\selectfont }
-\cs_new:Npn \zigma_rho_info_font: { \color{black}\sffamily\linespread{1}\fontsize{7.8}{9}\selectfont }
+\cs_new:Npn \zigma_rho_abstract_font: {
+  \tl_if_empty:NF \g_zigma_color_text_tl
+    { \color{\g_zigma_color_text_tl} }
+    { \color{black} }
+  \sffamily\linespread{1}\fontsize{8.5}{11}\selectfont
+}
+\cs_new:Npn \zigma_rho_keywords_font: {
+  \color{\zigma_rho_keywords_color_name:}
+  \sffamily\itshape\linespread{1}\fontsize{7.8}{9}\selectfont
+}
+\cs_new:Npn \zigma_rho_info_font: {
+  \tl_if_empty:NF \g_zigma_color_text_tl
+    { \color{\g_zigma_color_text_tl} }
+    { \color{black} }
+  \sffamily\linespread{1}\fontsize{7.8}{9}\selectfont
+}
 \cs_new:Npn \zigma_rho_footer_font: { \normalfont\sffamily\fontsize{7}{9}\selectfont }
+
+\cs_new:Npn \zigma_rho_text_color_name:
+  {
+    \tl_if_empty:NTF \g_zigma_color_text_tl
+      { black }
+      { \tl_use:N \g_zigma_color_text_tl }
+  }
+\cs_new:Npn \zigma_rho_keywords_color_name:
+  {
+    \tl_if_empty:NTF \g_zigma_color_keywords_tl
+      { \zigma_rho_text_color_name: }
+      { \tl_use:N \g_zigma_color_keywords_tl }
+  }
+\cs_new:Npn \zigma_rho_header_left_color_name:
+  {
+    \tl_if_empty:NTF \g_zigma_color_header_left_tl
+      { \zigma_rho_text_color_name: }
+      { \tl_use:N \g_zigma_color_header_left_tl }
+  }
+\cs_new:Npn \zigma_rho_header_center_color_name:
+  {
+    \tl_if_empty:NTF \g_zigma_color_header_center_tl
+      { \zigma_rho_text_color_name: }
+      { \tl_use:N \g_zigma_color_header_center_tl }
+  }
+\cs_new:Npn \zigma_rho_header_right_color_name:
+  {
+    \tl_if_empty:NTF \g_zigma_color_header_right_tl
+      { \zigma_rho_text_color_name: }
+      { \tl_use:N \g_zigma_color_header_right_tl }
+  }
+\cs_new:Npn \zigma_rho_footer_left_color_name:
+  {
+    \tl_if_empty:NTF \g_zigma_color_footer_left_tl
+      { \zigma_rho_text_color_name: }
+      { \tl_use:N \g_zigma_color_footer_left_tl }
+  }
+\cs_new:Npn \zigma_rho_footer_center_color_name:
+  {
+    \tl_if_empty:NTF \g_zigma_color_footer_center_tl
+      { \zigma_rho_text_color_name: }
+      { \tl_use:N \g_zigma_color_footer_center_tl }
+  }
+\cs_new:Npn \zigma_rho_footer_right_color_name:
+  {
+    \tl_if_empty:NTF \g_zigma_color_footer_right_tl
+      { \zigma_rho_text_color_name: }
+      { \tl_use:N \g_zigma_color_footer_right_tl }
+  }
+
+\cs_new:Npn \zigma_rho_section_color_name:
+  {
+    \tl_if_empty:NTF \g_zigma_color_section_tl
+      { black }
+      { \tl_use:N \g_zigma_color_section_tl }
+  }
+
+% Apply color.section to section heading commands
+\cs_new_protected:Npn \zigma_rho_apply_section_colors:
+  {
+    \makeatletter
+    \renewcommand\section{\@startsection {section}{1}{\z@}%
+      {-3.5ex \@plus -1ex \@minus -.2ex}%
+      {2.3ex \@plus .2ex}%
+      {\normalfont\Large\bfseries\color{\zigma_rho_section_color_name:}}}
+    \renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+      {-3.25ex\@plus -1ex \@minus -.2ex}%
+      {1.5ex \@plus .2ex}%
+      {\normalfont\large\bfseries\color{\zigma_rho_section_color_name:}}}
+    \renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+      {-3.25ex\@plus -1ex \@minus -.2ex}%
+      {1.5ex \@plus .2ex}%
+      {\normalfont\normalsize\bfseries\color{\zigma_rho_section_color_name:}}}
+    \renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+      {3.25ex \@plus1ex \@minus.2ex}%
+      {-1em}%
+      {\normalfont\normalsize\bfseries\color{\zigma_rho_section_color_name:}}}
+    \renewcommand\subparagraph{\@startsection{subparagraph}{5}{\parindent}%
+      {3.25ex \@plus1ex \@minus .2ex}%
+      {-1em}%
+      {\normalfont\normalsize\bfseries\color{\zigma_rho_section_color_name:}}}
+    \makeatother
+  }
+\AtBeginDocument{ \zigma_rho_apply_section_colors: }
 
 %% ========================================================================
 %% Header and Footer Setup (Rho Style)
@@ -94,14 +205,17 @@
 \fancypagestyle{firststyle}{
   \fancyfoot[L]{
     \zigma_rho_footer_font:
+    \color{\zigma_rho_footer_left_color_name:}
     \tl_use:N \g_zigma_footer_left_tl
   }
   \fancyfoot[C]{
     \zigma_rho_footer_font:
+    \color{\zigma_rho_footer_center_color_name:}
     \tl_use:N \g_zigma_footer_center_tl
   }
   \fancyfoot[R]{
     \zigma_rho_footer_font:
+    \color{\zigma_rho_footer_right_color_name:}
     \tl_if_empty:NTF \g_zigma_footer_right_tl
       {
         \tl_if_empty:NF \g_zigma_institution_tl { \tl_use:N \g_zigma_institution_tl \hspace{10pt} }
@@ -119,16 +233,19 @@
 % Regular pages header - Use zigma configurable variables if set, otherwise defaults
 \fancyhead[L]{
   \zigma_rho_footer_font:
+  \color{\zigma_rho_header_left_color_name:}
   \tl_if_empty:NTF \g_zigma_header_left_tl
     { \tl_if_empty:NF \g_zigma_leadauthor_tl { \tl_use:N \g_zigma_leadauthor_tl } }
     { \tl_use:N \g_zigma_header_left_tl }
 }
 \fancyhead[C]{
   \zigma_rho_footer_font:
+  \color{\zigma_rho_header_center_color_name:}
   \tl_use:N \g_zigma_header_center_tl
 }
 \fancyhead[R]{
   \zigma_rho_footer_font:
+  \color{\zigma_rho_header_right_color_name:}
   \tl_if_empty:NTF \g_zigma_header_right_tl
     { \tl_if_empty:NF \g_zigma_title_tl { \tl_use:N \g_zigma_title_tl } }
     { \tl_use:N \g_zigma_header_right_tl }
@@ -137,16 +254,19 @@
 % Regular pages footer - Use zigma configurable variables if set, otherwise default
 \fancyfoot[L]{
   \zigma_rho_footer_font:
+  \color{\zigma_rho_footer_left_color_name:}
   \tl_use:N \g_zigma_footer_left_tl
 }
 \fancyfoot[C]{
   \zigma_rho_footer_font:
+  \color{\zigma_rho_footer_center_color_name:}
   \tl_if_empty:NTF \g_zigma_footer_center_tl
     { \thepage\textendash\lastpage@lastpage }
     { \tl_use:N \g_zigma_footer_center_tl }
 }
 \fancyfoot[R]{
   \zigma_rho_footer_font:
+  \color{\zigma_rho_footer_right_color_name:}
   \tl_use:N \g_zigma_footer_right_tl
 }
 
@@ -177,6 +297,9 @@
       {
         \group_begin:
         \sffamily\bfseries\fontsize{8}{14}\selectfont
+        % Apply color.journal
+        \tl_if_empty:NF \g_zigma_color_journal_tl
+          { \color{\g_zigma_color_journal_tl} }
         % Journal name and URL link
         \tl_if_empty:NTF \g_zigma_journal_url_tl
           {
@@ -229,7 +352,10 @@
                 \tl_if_empty:NF \g_zigma_title_url_show_tl
                   {
                     \nobreakspace
-                    \exp_args:NV \href \g_zigma_title_url_tl { \tl_use:N \g_zigma_title_url_show_tl }
+                    \exp_args:NV \href \g_zigma_title_url_tl
+                      {
+                        {\zigma_rho_title_url_marker_font: \tl_use:N \g_zigma_title_url_show_tl}
+                      }
                   }
               }
           }
@@ -241,7 +367,13 @@
     \tl_if_empty:NF \g_zigma_subtitle_tl
       {
         \vskip5pt
-        {\color{rhocolor}\sffamily\fontsize{12}{16}\selectfont \tl_use:N \g_zigma_subtitle_tl\par}
+        {
+          \sffamily\fontsize{12}{16}\selectfont
+          \tl_if_empty:NTF \g_zigma_color_subtitle_tl
+            { \color{rhocolor} }
+            { \color{\g_zigma_color_subtitle_tl} }
+          \tl_use:N \g_zigma_subtitle_tl\par
+        }
       }
     
     \vspace{10pt}
